@@ -1,12 +1,12 @@
 <script setup lang="ts">
-const props = defineProps({
-  title: String,
-})
+defineProps<{
+  title: string
+}>()
 </script>
 
 <template>
-  <div class="bg-white/5 backdrop-blur-md p-4 rounded-2xl space-y-4">
-    <span class="block uppercase text-white font-medium text-sm -mt-">{{ props.title }}</span>
+  <div class="bg-white/5 backdrop-blur-md p-8 rounded-2xl space-y-4">
+    <span class="block uppercase text-white font-medium text-sm -mt-">{{ title }}</span>
 
     <div>
       <slot></slot>

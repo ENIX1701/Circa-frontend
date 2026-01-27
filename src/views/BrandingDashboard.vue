@@ -12,15 +12,17 @@ const logFile = (file: File | null) => {
 </script>
 
 <template>
-  <!-- logo -->
-  <BaseCard title="Logo"><ImageUpload @update:model-value="logFile" /></BaseCard>
+  <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
+    <!-- logo -->
+    <BaseCard title="Logo"><ImageUpload @update:model-value="logFile" /></BaseCard>
 
-  <!-- colors -->
-  <BaseCard title="Color scheme"><a href="#">meow</a></BaseCard>
+    <!-- colors -->
+    <BaseCard title="Color scheme"><a href="#">meow</a></BaseCard>
 
-  <!-- typography -->
-  <BaseCard title="Typography"><a href="#">mrrphhh~</a></BaseCard>
+    <!-- typography -->
+    <BaseCard title="Typography"><a href="#">mrrphhh~</a></BaseCard>
 
-  <!-- preview -->
-  <BaseCard title="Preview"><a href="#">aaa</a></BaseCard>
+    <!-- preview -->
+    <BaseCard title="Preview"><a href="#">aaa</a></BaseCard>
+  </div>
 </template>
