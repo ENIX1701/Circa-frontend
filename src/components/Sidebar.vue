@@ -20,7 +20,7 @@ const sections = [
     <div class="space-y-4">
       <NavbarSectionElement
         v-for="section in sections"
-        :key="section"
+        :key="section.title"
         :icon="section.icon"
         :title="section.title"
       />
