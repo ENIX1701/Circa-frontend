@@ -37,7 +37,10 @@ const colors = ref([
       ></BaseCard>
 
       <!-- typography -->
-      <BaseCard title="Typography"><a href="#">mrrphhh~</a></BaseCard>
+      <BaseCard title="Typography">
+        <!-- preview window -->
+        <!-- font selector -->
+      </BaseCard>
     </div>
 
     <!-- preview -->

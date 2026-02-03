@@ -3,11 +3,11 @@ import NavbarSectionElement from '@/components/NavbarSectionElement.vue'
 import { Palette, Users, Package2, CalendarRange, MessageCircleDashed } from 'lucide-vue-next'
 
 const sections = [
-  { icon: Palette, title: 'Branding' },
-  { icon: Users, title: 'Staff' },
-  { icon: Package2, title: 'Logistics' },
-  { icon: CalendarRange, title: 'Planner' },
-  { icon: MessageCircleDashed, title: 'Socials' },
+  { icon: Palette, title: 'Branding', path: '/branding' },
+  { icon: Users, title: 'Staff', path: '/staff' },
+  { icon: Package2, title: 'Logistics', path: '/logistics' },
+  { icon: CalendarRange, title: 'Planner', path: '/planner' },
+  { icon: MessageCircleDashed, title: 'Socials', path: '/socials' },
 ]
 </script>
 
@@ -18,15 +18,12 @@ const sections = [
 
     <!-- sections -->
     <div class="space-y-4">
-      <NavbarSectionElement
-        v-for="section in sections"
-        :key="section.title"
-        :icon="section.icon"
-        :title="section.title"
-      />
+      <RouterLink v-for="section in sections" :key="section.title" :to="section.path" class="block">
+        <NavbarSectionElement :icon="section.icon" :title="section.title" />
+      </RouterLink>
     </div>
 
-    <!-- timer -->
+    <!-- timer, TODO: move out to a separate component -->
     <div class="mt-auto">hi :3</div>
   </div>
 </template>
