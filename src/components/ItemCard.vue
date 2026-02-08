@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import ItemState from '@/enums/itemState.ts'
+import { ItemState } from '@/enums/itemState'
 
 defineProps<{
   assignee: string
-  item?: object
+  item: { name: string; supplier: string }
   amount?: number
   eta?: Date // TODO: how to store time interval in a better way?
   type: ItemState
