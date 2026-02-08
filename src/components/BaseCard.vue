@@ -8,7 +8,7 @@ defineProps<{
   <div class="bg-white/5 backdrop-blur-md p-8 rounded-2xl space-y-4">
     <span class="block uppercase text-white font-medium text-sm -mt-">{{ title }}</span>
 
-    <div>
+    <div class="flex-col space-y-4">
       <slot></slot>
     </div>
   </div>
