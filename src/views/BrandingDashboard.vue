@@ -23,7 +23,9 @@ const colors = ref([
   <div class="grid grid-cols-1 xl:grid-cols-2 gap-8">
     <div class="space-y-8">
       <!-- logo -->
-      <BaseCard title="Logo"><ImageUpload @update:model-value="logFile" /></BaseCard>
+      <BaseCard title="Logo">
+        <ImageUpload @update:model-value="logFile" />
+      </BaseCard>
 
       <!-- colors -->
       <BaseCard title="Color scheme"
@@ -44,6 +46,8 @@ const colors = ref([
     </div>
 
     <!-- preview -->
-    <BaseCard title="Preview"><a href="#">aaa</a></BaseCard>
+    <BaseCard title="Preview">
+      <a href="#">aaa</a>
+    </BaseCard>
   </div>
 </template>
