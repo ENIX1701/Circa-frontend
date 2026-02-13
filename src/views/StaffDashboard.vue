@@ -1,7 +1,17 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import BaseCard from '@/components/BaseCard.vue'
+import BaseButton from '@/components/BaseButton.vue'
+import BaseInput from '@/components/BaseInput.vue'
+import BaseSelect from '@/components/BaseSelect.vue'
 import { BadgeCheck, Users, Mail, Phone } from 'lucide-vue-next'
+
+const role = ref('')
+const roleOptions = [
+  { label: 'Event director', value: 'event_director' },
+  { label: 'Booth owner', value: 'booth_owner' },
+  { label: 'Clown', value: 'clown' },
+]
 
 const members = [
   {
@@ -64,18 +74,37 @@ const activeCount = computed(() => {
         </div>
       </BaseCard>
 
-      <BaseCard title="Add member">
+      <BaseCard title="Add member" class="flex flex-col space-y-4">
         <!-- name/surname -->
+        <div class="flex flex-row space-x-4">
+          <BaseInput label="name"></BaseInput>
+          <BaseInput label="surname"></BaseInput>
+        </div>
         <!-- role (dropdown) -->
+        <BaseSelect
+          id="role"
+          v-model="role"
+          label="role"
+          :options="roleOptions"
+          placeholder="Select role"
+        ></BaseSelect>
         <!-- email -->
+        <BaseInput label="email"></BaseInput>
         <!-- phone -->
+        <BaseInput label="phone"></BaseInput>
         <!-- confirm button -->
+        <BaseButton class="w-full"><span class="block">Confirm</span></BaseButton>
       </BaseCard>
 
       <BaseCard title="Quick actions">
-        <!-- export contacts button -->
-        <!-- send team email button -->
-        <!-- generate reports button -->
+        <div class="flex flex-col space-y-2">
+          <!-- export contacts button -->
+          <BaseButton><span>Export contacts</span></BaseButton>
+          <!-- send team email button -->
+          <BaseButton><span>Send team email</span></BaseButton>
+          <!-- generate reports button -->
+          <BaseButton><span>Generate reports</span></BaseButton>
+        </div>
       </BaseCard>
     </div>
 

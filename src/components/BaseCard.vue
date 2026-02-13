@@ -1,4 +1,6 @@
 <script setup lang="ts">
+defineOptions({ inheritAttrs: false })
+
 defineProps<{
   title: string
 }>()
@@ -10,7 +12,7 @@ defineProps<{
       title
     }}</span>
 
-    <div>
+    <div v-bind="$attrs">
       <slot></slot>
     </div>
   </div>
