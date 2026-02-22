@@ -1,10 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import BrandingDashboard from '@/views/BrandingDashboard.vue'
-import StaffDashboard from '@/views/StaffDashboard.vue'
-import LogisticsDashboard from '@/views/LogisticsDashboard.vue'
 import LoginPanel from '@/views/LoginPanel.vue'
-import PlannerDashboard from '@/views/PlannerDashboard.vue'
-import SocialsDashboard from '@/views/SocialsDashboard.vue'
+import type { Role } from '@/enums/role'
+import { appSections } from '@/config/sections'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -12,6 +9,7 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/branding',
+      meta: { roles: [Role.Admin, Role.Organizer] },
     },
     {
       path: '/login',
@@ -19,31 +17,12 @@ const router = createRouter({
       component: LoginPanel,
       meta: { public: true },
     },
-    {
-      path: '/branding',
-      name: 'branding',
-      component: BrandingDashboard,
-    },
-    {
-      path: '/staff',
-      name: 'staff',
-      component: StaffDashboard,
-    },
-    {
-      path: '/logistics',
-      name: 'logistics',
-      component: LogisticsDashboard,
-    },
-    {
-      path: '/planner',
-      name: 'planner',
-      component: PlannerDashboard,
-    },
-    {
-      path: '/socials',
-      name: 'socials',
-      component: SocialsDashboard,
-    },
+    ...appSections.map((s) => ({
+      path: s.path,
+      name: s.name,
+      component: s.component,
+      meta: { roles: s.roles },
+    })),
   ],
 })
 
@@ -56,6 +35,19 @@ router.beforeEach((to) => {
 
   if (token && to.name === 'login') {
     return { path: '/' }
+  }
+
+  if (to.meta.roles && token) {
+    try {
+      const payload = JSON.parse(atob(token.split('.')[1]))
+      const allowedRoles = to.meta.roles as Role[]
+
+      if (!allowedRoles.includes(payload.role)) {
+        return { path: '/' }
+      }
+    } catch {
+      return { name: 'login' }
+    }
   }
 })
 
