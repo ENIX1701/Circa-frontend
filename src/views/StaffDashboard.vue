@@ -8,9 +8,10 @@ import { BadgeCheck, Users, Mail, Phone } from 'lucide-vue-next'
 
 const role = ref('')
 const roleOptions = [
-  { label: 'Event director', value: 'event_director' },
-  { label: 'Booth owner', value: 'booth_owner' },
-  { label: 'Clown', value: 'clown' },
+  { label: 'Admin', value: 'admin' },
+  { label: 'Organizer', value: 'organizer' },
+  { label: 'Staff', value: 'staff' },
+  { label: 'Volunteer', value: 'volunteer' },
 ]
 
 const members = [
@@ -112,7 +113,7 @@ const activeCount = computed(() => {
     <BaseCard title="Team">
       <!-- list of all members' namecards -->
       <div class="space-y-4">
-        <BaseCard v-for="member in members">
+        <BaseCard v-for="member in members" v-bind:key="member.email">
           <div class="space-y-2">
             <div class="flex justify-between">
               <div class="space-x-2">
