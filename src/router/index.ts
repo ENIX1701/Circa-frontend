@@ -33,6 +33,10 @@ router.beforeEach((to) => {
   }
 
   if (token && to.name === 'login') {
+    if (to.query.token) {
+      return
+    }
+
     return { path: '/' }
   }
 

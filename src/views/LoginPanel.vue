@@ -1,54 +1,85 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { notifyTokenChange } from '@/composables/useAuth'
+import { ref, onMounted } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
+const route = useRoute()
+const { requestMagicLink, verifyMagicToken } = useAuth()
 
 const email = ref('')
 const error = ref('')
 const loading = ref(false)
+const linkSent = ref(false)
+const linkMessage = ref('')
+const verifying = ref(false)
 
-// get submit
-async function handleLogin() {
+onMounted(async () => {
+  const token = route.query.token as string | undefined
+  if (!token) return
+
+  verifying.value = true
+  error.value = ''
+
+  try {
+    await verifyMagicToken(token)
+    router.replace('/')
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Verification failed'
+  } finally {
+    verifying.value = false
+  }
+})
+
+async function handleRequestLink() {
   error.value = ''
 
   if (!email.value.trim()) {
-    error.value = 'Please enter your email'
+    error.value = 'Please enter your email QwQ'
     return
   }
 
   loading.value = true
 
   try {
-    const res = await fetch('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: email.value }),
-    })
-
-    if (!res.ok) {
-      const message = await res.text()
-      error.value = message || 'Login failed'
-      return
-    }
-
-    const data = await res.json()
-    localStorage.setItem('token', data.token)
-    notifyTokenChange()
-    router.push('/')
-  } catch {
-    error.value = 'Could not reach server'
+    const message = await requestMagicLink(email.value)
+    linkSent.value = true
+    linkMessage.value = message
+  } catch (e) {
+    error.value = e instanceof Error ? e.message : 'Could not reach server'
   } finally {
     loading.value = false
   }
+}
+
+function resetForm() {
+  linkSent.value = false
+  error.value = ''
 }
 </script>
 
 <!-- TODO: make the sidebar go away on the login screen :sob: -->
 <template>
-  <div>
-    <form @submit.prevent="handleLogin" class="w-full">
+  <div v-if="verifying" class="space-y-4 text-center">
+    <h1 class="text-2xl font-bold text-white">Verifying your magic link...</h1>
+    <p class="text-neutral-400">Hang on, this will only take a moment :3</p>
+  </div>
+
+  <div v-else-if="linkSent" class="space-y-4">
+    <h1 class="text-2xl font-bold text-white">
+      Check your inbox! (or the backend console for now...)
+    </h1>
+    <p class="text-neutral-400">{{ linkMessage }}</p>
+    <button
+      @click="resetForm"
+      class="text-sm text-violet-400 hover:text-violet-300 underline transition"
+    >
+      Try a different email
+    </button>
+  </div>
+
+  <div v-else>
+    <form @submit.prevent="handleRequestLink" class="w-full">
       <h1 class="text-2xl font-bold text-white">Sign in</h1>
 
       <div v-if="error" class="rounded-lg bg-red-500/10 p-4 text-sm text-red-400">{{ error }}</div>
@@ -69,7 +100,7 @@ async function handleLogin() {
         :disabled="loading"
         class="w-full rounded-lg bg-violet-600 px-4 py-2 font-medium text-white transition hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        {{ loading ? 'Signing in...' : 'Sign in' }}
+        {{ loading ? 'Sending link...' : 'Send magic link' }}
       </button>
     </form>
   </div>

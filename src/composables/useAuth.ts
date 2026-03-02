@@ -46,5 +46,34 @@ export const useAuth = () => {
     return role.value !== null && roles.includes(role.value)
   }
 
-  return { claims, role, isLoggedIn, logout, hasRole }
+  async function requestMagicLink(email: string): Promise<string> {
+    const res = await fetch('/auth/request-link', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    })
+
+    if (!res.ok) {
+      const body = await res.json().catch(() => null)
+      throw new Error(body?.message ?? 'Failed to request magic link')
+    }
+
+    const data = await res.json()
+    return data.message
+  }
+
+  async function verifyMagicToken(token: string): Promise<void> {
+    const res = await fetch(`/auth/verify?token=${encodeURIComponent(token)}`)
+
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(text || 'Invalid or expired magic link')
+    }
+
+    const data = await res.json()
+    localStorage.setItem('token', data.token)
+    notifyTokenChange()
+  }
+
+  return { claims, role, isLoggedIn, logout, hasRole, requestMagicLink, verifyMagicToken }
 }
