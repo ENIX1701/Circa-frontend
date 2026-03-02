@@ -1,6 +1,6 @@
-import type { Role } from '@/enums/Role'
 import { CalendarRange, MessageCircleDashed, Package2, Palette, Users } from 'lucide-vue-next'
 import type { Component } from 'vue'
+import { Role } from '@/enums/Role'
 
 export interface AppSection {
   path: string

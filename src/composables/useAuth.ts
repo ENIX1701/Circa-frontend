@@ -1,4 +1,4 @@
-import type { Role } from '@/enums/role'
+import type { Role } from '@/enums/Role'
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 

@@ -1,9 +1,4 @@
 <script setup lang="ts">
-const props = defineProps<{
-  title: string
-  color: string
-}>()
-
 const emit = defineEmits<{
   (e: 'update:color', value: string): void
 }>()

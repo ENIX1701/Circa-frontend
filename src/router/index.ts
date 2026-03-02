@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginPanel from '@/views/LoginPanel.vue'
-import type { Role } from '@/enums/role'
+import type { Role } from '@/enums/Role'
 import { appSections } from '@/config/sections'
 
 const router = createRouter({
@@ -9,7 +9,6 @@ const router = createRouter({
     {
       path: '/',
       redirect: '/branding',
-      meta: { roles: [Role.Admin, Role.Organizer] },
     },
     {
       path: '/login',

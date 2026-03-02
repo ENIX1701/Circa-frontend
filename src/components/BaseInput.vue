@@ -28,7 +28,7 @@ const emit = defineEmits<{
         :class="[
           error
             ? 'ring-1 ring-red-300 focus:ring-red-500 text-red-900 '
-            : 'ring-1 ring-gray-300 focus-ring-gray-950',
+            : 'ring-1 ring-gray-300 focus:ring-gray-950',
         ]"
       />
 
