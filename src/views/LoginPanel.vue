@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
+import { notifyTokenChange } from '@/composables/useAuth'
 
 const router = useRouter()
 
@@ -34,6 +35,7 @@ async function handleLogin() {
 
     const data = await res.json()
     localStorage.setItem('token', data.token)
+    notifyTokenChange()
     router.push('/')
   } catch {
     error.value = 'Could not reach server'

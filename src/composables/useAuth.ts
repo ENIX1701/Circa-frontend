@@ -1,6 +1,17 @@
 import type { Role } from '@/enums/Role'
-import { computed } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
+
+// okay so this is really weird and frontend specific
+// but I've found out the hard way that just logging in doesn't refresh the navbar
+// so as a workaround I'm adding a ref
+// that will force the refresh once updated >:3c
+const tokenVersion = ref(0)
+
+// this makes it work (hopefully)
+export function notifyTokenChange() {
+  tokenVersion.value++
+}
 
 function parseToken() {
   const token = localStorage.getItem('token')
@@ -17,13 +28,17 @@ function parseToken() {
 export const useAuth = () => {
   const router = useRouter()
 
-  const claims = computed(() => parseToken())
+  const claims = computed(() => {
+    tokenVersion.value // should suffice to notify/trigger the ref
+    return parseToken()
+  })
   const role = computed(() => (claims.value?.role as Role) ?? null)
   const isLoggedIn = computed(() => claims.value !== null)
 
   // no server-side logout for now
   function logout() {
     localStorage.removeItem('token')
+    notifyTokenChange()
     router.push({ name: 'login' })
   }
 
