@@ -1,343 +1,155 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { mount, flushPromises } from '@vue/test-utils'
-import LoginPanel from '@/views/LoginPanel.vue'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
+import { flushPromises, mount } from '@vue/test-utils'
 
-// Mock vue-router
 const pushMock = vi.fn()
+const replaceMock = vi.fn()
+const requestMagicLinkMock = vi.fn()
+const verifyMagicTokenMock = vi.fn()
+
+const routeMock: { query: Record<string, string | undefined> } = {
+  query: {},
+}
+
+const authState = {
+  isTestInboxPreviewAvailable: true,
+}
+
 vi.mock('vue-router', () => ({
   useRouter: () => ({
     push: pushMock,
+    replace: replaceMock,
+  }),
+  useRoute: () => routeMock,
+}))
+
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: () => ({
+    requestMagicLink: requestMagicLinkMock,
+    verifyMagicToken: verifyMagicTokenMock,
+    isTestInboxPreviewAvailable: authState.isTestInboxPreviewAvailable,
   }),
 }))
 
-// Mock notifyTokenChange
-const notifyTokenChangeMock = vi.fn()
-vi.mock('@/composables/useAuth', () => ({
-  notifyTokenChange: (...args: unknown[]) => notifyTokenChangeMock(...args),
-}))
+import LoginPanel from '@/views/LoginPanel.vue'
+
+function mountLogin() {
+  return mount(LoginPanel, {
+    global: {
+      stubs: {
+        RouterLink: {
+          name: 'RouterLink',
+          props: ['to'],
+          template: '<a><slot /></a>',
+        },
+      },
+    },
+  })
+}
 
 describe('LoginPanel.vue', () => {
-  let fetchMock: ReturnType<typeof vi.fn>
-
   beforeEach(() => {
-    localStorage.clear()
     pushMock.mockReset()
-    notifyTokenChangeMock.mockReset()
-
-    fetchMock = vi.fn()
-    vi.stubGlobal('fetch', fetchMock)
+    replaceMock.mockReset()
+    requestMagicLinkMock.mockReset()
+    verifyMagicTokenMock.mockReset()
+    routeMock.query = {}
+    authState.isTestInboxPreviewAvailable = true
   })
 
-  afterEach(() => {
-    localStorage.clear()
-    vi.restoreAllMocks()
-  })
-
-  function mountLogin() {
-    return mount(LoginPanel, {
-      global: {
-        stubs: {},
-      },
-    })
-  }
-
-  // ── rendering ────────────────────────────────────────────────────
-
-  it('renders the sign in heading', () => {
-    const wrapper = mountLogin()
-    expect(wrapper.find('h1').text()).toBe('Sign in')
-  })
-
-  it('renders an email input field', () => {
-    const wrapper = mountLogin()
-    const input = wrapper.find('input#email')
-    expect(input.exists()).toBe(true)
-    expect(input.attributes('type')).toBe('email')
-  })
-
-  it('renders a submit button', () => {
-    const wrapper = mountLogin()
-    const btn = wrapper.find('button[type="submit"]')
-    expect(btn.exists()).toBe(true)
-    expect(btn.text()).toBe('Sign in')
-  })
-
-  it('does not show error message initially', () => {
-    const wrapper = mountLogin()
-    // The error div is rendered conditionally with v-if="error"
-    const errorDiv = wrapper.find('.text-red-400')
-    expect(errorDiv.exists()).toBe(false)
-  })
-
-  // ── empty email validation ───────────────────────────────────────
-
-  it('shows error when submitting with empty email', async () => {
+  it('renders the sign in form', () => {
     const wrapper = mountLogin()
 
-    await wrapper.find('form').trigger('submit')
+    expect(wrapper.text()).toContain('Sign in')
+    expect(wrapper.find('input#email').exists()).toBe(true)
+    expect(wrapper.find('button[type="submit"]').text()).toContain('Send magic link')
+  })
+
+  it('shows a validation error when email is empty', async () => {
+    const wrapper = mountLogin()
+
+    await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
 
-    const errorDiv = wrapper.find('.text-red-400')
-    expect(errorDiv.exists()).toBe(true)
-    expect(errorDiv.text()).toBe('Please enter your email')
+    expect(wrapper.text()).toContain('Please enter your email')
+    expect(requestMagicLinkMock).not.toHaveBeenCalled()
   })
 
-  it('shows error when submitting with whitespace-only email', async () => {
-    const wrapper = mountLogin()
-
-    await wrapper.find('input#email').setValue('   ')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    const errorDiv = wrapper.find('.text-red-400')
-    expect(errorDiv.exists()).toBe(true)
-    expect(errorDiv.text()).toBe('Please enter your email')
-  })
-
-  it('does not call fetch when email is empty', async () => {
-    const wrapper = mountLogin()
-
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(fetchMock).not.toHaveBeenCalled()
-  })
-
-  // ── successful login ─────────────────────────────────────────────
-
-  it('calls fetch with the correct URL and body on submit', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ token: 'jwt-abc' }),
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('admin@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(fetchMock).toHaveBeenCalledWith('/auth/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'admin@example.com' }),
-    })
-  })
-
-  it('stores the token in localStorage on success', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ token: 'jwt-token-123' }),
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('admin@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(localStorage.getItem('token')).toBe('jwt-token-123')
-  })
-
-  it('calls notifyTokenChange on success', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ token: 'jwt-abc' }),
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('admin@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(notifyTokenChangeMock).toHaveBeenCalled()
-  })
-
-  it('navigates to / on success', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ token: 'jwt-abc' }),
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('admin@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(pushMock).toHaveBeenCalledWith('/')
-  })
-
-  // ── failed login (server returns non-ok) ─────────────────────────
-
-  it('shows error message from server when response is not ok', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      text: async () => 'Invalid credentials',
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('bad@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    const errorDiv = wrapper.find('.text-red-400')
-    expect(errorDiv.exists()).toBe(true)
-    expect(errorDiv.text()).toBe('Invalid credentials')
-  })
-
-  it('shows fallback error when server returns empty message', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      text: async () => '',
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('bad@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    const errorDiv = wrapper.find('.text-red-400')
-    expect(errorDiv.exists()).toBe(true)
-    expect(errorDiv.text()).toBe('Login failed')
-  })
-
-  it('does not store token when login fails', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      text: async () => 'Nope',
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('bad@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(localStorage.getItem('token')).toBeNull()
-  })
-
-  it('does not navigate when login fails', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      text: async () => 'Nope',
-    })
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('bad@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(pushMock).not.toHaveBeenCalled()
-  })
-
-  // ── network error ────────────────────────────────────────────────
-
-  it('shows "Could not reach server" on network error', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('network down'))
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('user@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    const errorDiv = wrapper.find('.text-red-400')
-    expect(errorDiv.exists()).toBe(true)
-    expect(errorDiv.text()).toBe('Could not reach server')
-  })
-
-  it('does not store token on network error', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('network down'))
-
-    const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('user@example.com')
-    await wrapper.find('form').trigger('submit')
-    await flushPromises()
-
-    expect(localStorage.getItem('token')).toBeNull()
-  })
-
-  // ── loading state ────────────────────────────────────────────────
-
-  it('disables the button while loading', async () => {
-    let resolveFetch!: (value: unknown) => void
-    fetchMock.mockReturnValueOnce(
-      new Promise((resolve) => {
-        resolveFetch = resolve
-      }),
+  it('requests a magic link and shows the success state', async () => {
+    requestMagicLinkMock.mockResolvedValueOnce(
+      'If that email is registered, a magic link has been sent.',
     )
 
     const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('user@example.com')
-    await wrapper.find('form').trigger('submit')
-
-    // While fetch is pending
-    await flushPromises()
-    const btn = wrapper.find('button[type="submit"]')
-    expect(btn.attributes('disabled')).toBeDefined()
-    expect(btn.text()).toBe('Signing in...')
-
-    // Resolve fetch
-    resolveFetch({
-      ok: true,
-      json: async () => ({ token: 'jwt' }),
-    })
+    await wrapper.find('input#email').setValue('tester@example.com')
+    await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(btn.attributes('disabled')).toBeUndefined()
-    expect(btn.text()).toBe('Sign in')
+    expect(requestMagicLinkMock).toHaveBeenCalledWith('tester@example.com')
+    expect(wrapper.text()).toContain('Magic link requested')
+    expect(wrapper.text()).toContain('If that email is registered')
   })
 
-  it('re-enables the button after a failed request', async () => {
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      text: async () => 'fail',
-    })
+  it('shows the test inbox link after success when preview mode is enabled', async () => {
+    requestMagicLinkMock.mockResolvedValueOnce(
+      'If that email is registered, a magic link has been sent.',
+    )
 
     const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('user@example.com')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('input#email').setValue('tester@example.com')
+    await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
 
-    const btn = wrapper.find('button[type="submit"]')
-    expect(btn.attributes('disabled')).toBeUndefined()
-    expect(btn.text()).toBe('Sign in')
+    const routerLink = wrapper.findComponent({ name: 'RouterLink' })
+    expect(routerLink.exists()).toBe(true)
+    expect(routerLink.props('to')).toEqual({
+      name: 'test-inbox',
+      query: { email: 'tester@example.com' },
+    })
   })
 
-  it('re-enables the button after a network error', async () => {
-    fetchMock.mockRejectedValueOnce(new Error('network'))
+  it('hides the test inbox link when preview mode is disabled', async () => {
+    authState.isTestInboxPreviewAvailable = false
+    requestMagicLinkMock.mockResolvedValueOnce(
+      'If that email is registered, a magic link has been sent.',
+    )
 
     const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('user@example.com')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('input#email').setValue('tester@example.com')
+    await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
 
-    const btn = wrapper.find('button[type="submit"]')
-    expect(btn.attributes('disabled')).toBeUndefined()
-    expect(btn.text()).toBe('Sign in')
+    expect(wrapper.findComponent({ name: 'RouterLink' }).exists()).toBe(false)
   })
 
-  // ── error clearing ───────────────────────────────────────────────
-
-  it('clears a previous error when resubmitting', async () => {
-    // First: trigger an error
-    fetchMock.mockResolvedValueOnce({
-      ok: false,
-      text: async () => 'First error',
-    })
+  it('shows request errors', async () => {
+    requestMagicLinkMock.mockRejectedValueOnce(new Error('Request failed'))
 
     const wrapper = mountLogin()
-    await wrapper.find('input#email').setValue('user@example.com')
-    await wrapper.find('form').trigger('submit')
+    await wrapper.find('input#email').setValue('tester@example.com')
+    await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(wrapper.find('.text-red-400').text()).toBe('First error')
+    expect(wrapper.text()).toContain('Request failed')
+  })
 
-    // Second: submit again, the error should clear before the new request
-    fetchMock.mockResolvedValueOnce({
-      ok: true,
-      json: async () => ({ token: 'jwt' }),
-    })
+  it('verifies a token from the route query on mount', async () => {
+    routeMock.query = { token: 'magic-token-123' }
+    verifyMagicTokenMock.mockResolvedValueOnce(undefined)
 
-    await wrapper.find('form').trigger('submit')
+    mountLogin()
     await flushPromises()
 
-    expect(wrapper.find('.text-red-400').exists()).toBe(false)
+    expect(verifyMagicTokenMock).toHaveBeenCalledWith('magic-token-123')
+    expect(replaceMock).toHaveBeenCalledWith('/')
+  })
+
+  it('shows verification errors', async () => {
+    routeMock.query = { token: 'bad-token' }
+    verifyMagicTokenMock.mockRejectedValueOnce(new Error('Invalid or expired magic link'))
+
+    const wrapper = mountLogin()
+    await flushPromises()
+
+    expect(wrapper.text()).toContain('Invalid or expired magic link')
   })
 })

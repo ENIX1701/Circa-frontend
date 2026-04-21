@@ -5,7 +5,7 @@ import { useAuth } from '@/composables/useAuth'
 
 const router = useRouter()
 const route = useRoute()
-const { requestMagicLink, verifyMagicToken } = useAuth()
+const { requestMagicLink, verifyMagicToken, isTestInboxPreviewAvailable } = useAuth()
 
 const email = ref('')
 const error = ref('')
@@ -24,8 +24,8 @@ onMounted(async () => {
   try {
     await verifyMagicToken(token)
     router.replace('/')
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Verification failed'
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Verification failed'
   } finally {
     verifying.value = false
   }
@@ -42,11 +42,10 @@ async function handleRequestLink() {
   loading.value = true
 
   try {
-    const message = await requestMagicLink(email.value)
+    linkMessage.value = await requestMagicLink(email.value.trim())
     linkSent.value = true
-    linkMessage.value = message
-  } catch (e) {
-    error.value = e instanceof Error ? e.message : 'Could not reach server'
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Could not reach server'
   } finally {
     loading.value = false
   }
@@ -58,48 +57,60 @@ function resetForm() {
 }
 </script>
 
-<!-- TODO: make the sidebar go away on the login screen :sob: -->
 <template>
   <div v-if="verifying" class="space-y-4 text-center">
-    <h1 class="text-2xl font-bold text-white">Verifying your magic link...</h1>
-    <p class="text-neutral-400">Hang on, this will only take a moment :3</p>
+    <p class="section-label">Authentication</p>
+    <h1 class="text-3xl font-bold tracking-tight">Verifying your magic link...</h1>
+    <p class="text-sm text-(--color-text-muted)">Hang on, this will only take a moment :3</p>
   </div>
 
-  <div v-else-if="linkSent" class="space-y-4">
-    <h1 class="text-2xl font-bold text-white">
-      Check your inbox! (or the backend console for now...)
-    </h1>
-    <p class="text-neutral-400">{{ linkMessage }}</p>
-    <button
-      @click="resetForm"
-      class="text-sm text-violet-400 hover:text-violet-300 underline transition"
-    >
-      Try a different email
-    </button>
+  <div v-else-if="linkSent" class="space-y-6">
+    <div class="space-y-2">
+      <p class="section-label">Check your inbox</p>
+      <h1 class="text-3xl font-bold tracking-tight">Magic link requested</h1>
+      <p class="text-sm text(--color-text-muted)">{{ linkMessage }}</p>
+    </div>
+
+    <div v-if="isTestInboxPreviewAvailable" class="glass-panel p-4">
+      <p class="text-sm leading-6 text-(--color-text-muted)">
+        This instance is configured without an SMTP server. You can get the magic link from the dev
+        inbox!
+      </p>
+
+      <div class="mt-4">
+        <RouterLink :to="{ name: 'test-inbox', query: { email } }" class="app-button-secondary"
+          >Open dev inbox</RouterLink
+        >
+      </div>
+    </div>
+
+    <button @click="resetForm" class="app-link-subtle">Try a different email</button>
   </div>
 
-  <div v-else>
-    <form @submit.prevent="handleRequestLink" class="w-full">
-      <h1 class="text-2xl font-bold text-white">Sign in</h1>
+  <div v-else class="space-y-6">
+    <div class="space-y-2">
+      <p class="section-label">Authentication</p>
+      <h1 class="text-3xl font-bold tracking-tight">Sign in</h1>
+      <p class="text-sm text(--color-text-muted)">
+        Enter your email and we'll send you your own magic link :3
+      </p>
+    </div>
 
-      <div v-if="error" class="rounded-lg bg-red-500/10 p-4 text-sm text-red-400">{{ error }}</div>
+    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
 
+    <form @submit.prevent="handleRequestLink" class="space-y-5">
       <div class="space-y-2">
-        <label for="email" class="block text-sm font-medium text-neutral-400">Email</label>
+        <label for="email" class="block text-sm font-medium text-(--color-text-muted)">Email</label>
         <input
           id="email"
           v-model="email"
           type="email"
           placeholder="admin@example.com"
-          class="w-full rounded-lg border border-neutral-700 bg-neutral-800 px-4 py-2 text-white placeholder-neutral-500 outline-none focus:border-violet-500 focus:ring-1 focus:ring-violet-500"
+          class="app-input"
         />
       </div>
 
-      <button
-        type="submit"
-        :disabled="loading"
-        class="w-full rounded-lg bg-violet-600 px-4 py-2 font-medium text-white transition hover:bg-violet-500 disabled:opacity-50 disabled:cursor-not-allowed"
-      >
+      <button type="submit" :disabled="loading" class="app-button-primary w-full">
         {{ loading ? 'Sending link...' : 'Send magic link' }}
       </button>
     </form>

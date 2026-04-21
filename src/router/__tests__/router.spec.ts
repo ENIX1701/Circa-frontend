@@ -396,3 +396,19 @@ describe('Router navigation guard logic', () => {
     expect(result).toEqual({ path: '/' })
   })
 })
+
+it('allows access to /test-inbox without a token (public route)', () => {
+  const result = guardLogic(
+    makeTo({ path: '/test-inbox', name: 'test-inbox', meta: { public: true } }),
+  )
+  expect(result).toBeUndefined()
+})
+
+it('allows authenticated users to open /test-inbox', () => {
+  localStorage.setItem('token', fakeJwt({ sub: 'u', role: Role.Admin, exp: 1 }))
+
+  const result = guardLogic(
+    makeTo({ path: '/test-inbox', name: 'test-inbox', meta: { public: true } }),
+  )
+  expect(result).toBeUndefined()
+})

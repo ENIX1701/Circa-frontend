@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginPanel from '@/views/LoginPanel.vue'
+import TestInbox from '@/views/TestInbox.vue'
 import type { Role } from '@/enums/Role'
 import { appSections } from '@/config/sections'
 
@@ -14,6 +15,12 @@ const router = createRouter({
       path: '/login',
       name: 'login',
       component: LoginPanel,
+      meta: { public: true },
+    },
+    {
+      path: '/test-inbox',
+      name: 'test-inbox',
+      component: TestInbox,
       meta: { public: true },
     },
     ...appSections.map((s) => ({

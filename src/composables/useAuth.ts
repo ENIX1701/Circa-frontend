@@ -2,6 +2,19 @@ import type { Role } from '@/enums/Role'
 import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router'
 
+export interface TestInboxLinkPreview {
+  email: string
+  magic_link: string
+  requested_at: string
+  expires_at: string
+}
+
+export type TestInboxLookupResult =
+  | { ok: true; data: TestInboxLinkPreview }
+  | { ok: false; status: number; message: string }
+
+const env = import.meta.env as ImportMetaEnv & Record<string, string | undefined>
+
 // okay so this is really weird and frontend specific
 // but I've found out the hard way that just logging in doesn't refresh the navbar
 // so as a workaround I'm adding a ref
@@ -25,6 +38,17 @@ function parseToken() {
   }
 }
 
+async function readErrorMessage(response: Response): Promise<string> {
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (contentType.includes('application/json')) {
+    const body = await response.json().catch(() => null)
+    return body?.message ?? body?.error ?? 'Request failed'
+  }
+
+  return (await response.text()) || 'Request failed'
+}
+
 export const useAuth = () => {
   const router = useRouter()
 
@@ -34,6 +58,7 @@ export const useAuth = () => {
   })
   const role = computed(() => (claims.value?.role as Role) ?? null)
   const isLoggedIn = computed(() => claims.value !== null)
+  const isTestInboxPreviewAvailable = env.DEV || env.VITE_AUTH_DELIVERY_MODE === 'outbox'
 
   // no server-side logout for now
   function logout() {
@@ -54,8 +79,7 @@ export const useAuth = () => {
     })
 
     if (!res.ok) {
-      const body = await res.json().catch(() => null)
-      throw new Error(body?.message ?? 'Failed to request magic link')
+      throw new Error(await readErrorMessage(res))
     }
 
     const data = await res.json()
@@ -66,8 +90,7 @@ export const useAuth = () => {
     const res = await fetch(`/auth/verify?token=${encodeURIComponent(token)}`)
 
     if (!res.ok) {
-      const text = await res.text()
-      throw new Error(text || 'Invalid or expired magic link')
+      throw new Error(await readErrorMessage(res))
     }
 
     const data = await res.json()
@@ -75,5 +98,29 @@ export const useAuth = () => {
     notifyTokenChange()
   }
 
-  return { claims, role, isLoggedIn, logout, hasRole, requestMagicLink, verifyMagicToken }
+  async function getLatestTestInboxLink(email: string): Promise<TestInboxLookupResult> {
+    const res = await fetch(`/auth/test-inbox/latest?email=${encodeURIComponent(email)}`)
+
+    if (!res.ok) {
+      return {
+        ok: false,
+        status: res.status,
+        message: await readErrorMessage(res),
+      }
+    }
+
+    return { ok: true, data: (await res.json()) as TestInboxLinkPreview }
+  }
+
+  return {
+    claims,
+    role,
+    isLoggedIn,
+    isTestInboxPreviewAvailable,
+    logout,
+    hasRole,
+    requestMagicLink,
+    verifyMagicToken,
+    getLatestTestInboxLink,
+  }
 }
