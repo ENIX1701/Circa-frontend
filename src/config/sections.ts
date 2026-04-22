@@ -1,4 +1,11 @@
-import { CalendarRange, MessageCircleDashed, Package2, Palette, Users } from 'lucide-vue-next'
+import {
+  CalendarDays,
+  CalendarRange,
+  MessageCircleDashed,
+  Package2,
+  Palette,
+  Users,
+} from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { Role } from '@/enums/Role'
 
@@ -12,6 +19,13 @@ export interface AppSection {
 }
 
 export const appSections: AppSection[] = [
+  {
+    path: '/events',
+    name: 'events',
+    component: () => import('@/views/EventsHub.vue'),
+    icon: CalendarDays,
+    title: 'Events',
+  },
   {
     path: '/branding',
     name: 'branding',

@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import LoginPanel from '@/views/LoginPanel.vue'
 import TestInbox from '@/views/TestInbox.vue'
+import EventDetail from '@/views/EventDetail.vue'
 import type { Role } from '@/enums/Role'
 import { appSections } from '@/config/sections'
 
@@ -9,7 +10,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/branding',
+      redirect: '/events',
     },
     {
       path: '/login',
@@ -22,6 +23,11 @@ const router = createRouter({
       name: 'test-inbox',
       component: TestInbox,
       meta: { public: true },
+    },
+    {
+      path: '/events/:id',
+      name: 'event-detail',
+      component: EventDetail,
     },
     ...appSections.map((s) => ({
       path: s.path,

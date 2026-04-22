@@ -5,7 +5,6 @@ import vue from '@vitejs/plugin-vue'
 import vueDevTools from 'vite-plugin-vue-devtools'
 import tailwindcss from '@tailwindcss/vite'
 
-// https://vite.dev/config/
 export default defineConfig({
   plugins: [vue(), vueDevTools(), tailwindcss()],
   resolve: {
@@ -16,7 +15,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/auth': 'http://localhost:8080',
-      '/api': 'http://localhost:8080',
+      '/api/me': 'http://localhost:8080',
+      '/api/events': {
+        target: 'http://localhost:8080',
+        rewrite: (path) => path.replace(/^\/api/, ''),
+      },
     },
   },
 })
