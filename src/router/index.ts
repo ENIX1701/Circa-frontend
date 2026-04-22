@@ -55,9 +55,13 @@ router.beforeEach((to) => {
 
   if (to.meta.roles && token) {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
-      const allowedRoles = to.meta.roles as Role[]
+      const payloadSegment = token.split('.')[1]
+      if (!payloadSegment) {
+        return { name: 'login' }
+      }
+      const payload = JSON.parse(atob(payloadSegment))
 
+      const allowedRoles = to.meta.roles as Role[]
       if (!allowedRoles.includes(payload.role)) {
         return { path: '/' }
       }

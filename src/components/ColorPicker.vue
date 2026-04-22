@@ -1,11 +1,15 @@
 <script setup lang="ts">
+const { title, color } = defineProps<{
+  title: string
+  color: string
+}>()
+
 const emit = defineEmits<{
-  (e: 'update:color', value: string): void
+  'update:color': [value: string]
 }>()
 
 const handleInput = (event: Event) => {
-  const target = event.target as HTMLInputElement
-  emit('update:color', target.value)
+  emit('update:color', (event.target as HTMLInputElement).value)
 }
 </script>
 

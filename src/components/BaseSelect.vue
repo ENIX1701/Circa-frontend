@@ -29,7 +29,7 @@ const emit = defineEmits<{
         v-bind="$attrs"
         :id="id"
         :value="modelValue"
-        @change="emit('update:modelValue', $event.target as HTMLSelectElement).value"
+        @change="emit('update:modelValue', ($event.target as HTMLSelectElement).value)"
         class="block w-full rounded-md p-2"
         :class="[
           error

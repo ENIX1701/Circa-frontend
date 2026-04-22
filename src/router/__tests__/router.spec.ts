@@ -25,7 +25,11 @@ function guardLogic(to: Partial<RouteLocationNormalized>): ReturnType<typeof Obj
 
   if (to.meta?.roles && token) {
     try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
+      const payloadSegment = token.split('.')[1]
+      if (!payloadSegment) {
+        return { name: 'login' }
+      }
+      const payload = JSON.parse(atob(payloadSegment))
       const allowedRoles = to.meta.roles as Role[]
 
       if (!allowedRoles.includes(payload.role)) {

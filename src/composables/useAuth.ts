@@ -32,6 +32,8 @@ function parseToken() {
 
   try {
     const payload = token.split('.')[1]
+    if (!payload) return null
+
     return JSON.parse(atob(payload)) as { sub: string; role: string; exp: number }
   } catch {
     return null
