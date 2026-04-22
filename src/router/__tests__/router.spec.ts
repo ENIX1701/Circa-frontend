@@ -412,3 +412,27 @@ it('allows authenticated users to open /test-inbox', () => {
   )
   expect(result).toBeUndefined()
 })
+
+it('redirects to login when visiting /events without a token', () => {
+  localStorage.clear()
+  const result = guardLogic(makeTo({ path: '/events', name: 'events', meta: {} }))
+  expect(result).toEqual({ name: 'login' })
+})
+
+it('allows access to /events with a token', () => {
+  localStorage.setItem('token', fakeJwt({ sub: 'u', role: Role.Volunteer, exp: 1 }))
+  const result = guardLogic(makeTo({ path: '/events', name: 'events', meta: {} }))
+  expect(result).toBeUndefined()
+})
+
+it('redirects to login when visiting /events/:id without a token', () => {
+  localStorage.clear()
+  const result = guardLogic(makeTo({ path: '/events/evt-1', name: 'event-detail', meta: {} }))
+  expect(result).toEqual({ name: 'login' })
+})
+
+it('allows access to /events/:id with a token', () => {
+  localStorage.setItem('token', fakeJwt({ sub: 'u', role: Role.Admin, exp: 1 }))
+  const result = guardLogic(makeTo({ path: '/events/evt-1', name: 'event-detail', meta: {} }))
+  expect(result).toBeUndefined()
+})

@@ -73,12 +73,6 @@ function statusLabel(status: EventStatus) {
   }
 }
 
-function titleCase(value: string) {
-  return value.charAt(0).toUppercase() + value.slice(1)
-}
-
-// TODO: check if status badge style should be applied here or in the stylesheet
-
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
     dateStyle: 'medium',
@@ -93,7 +87,7 @@ async function loadEvents() {
   try {
     events.value = await listEvents()
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to load evnts'
+    error.value = err instanceof Error ? err.message : 'Failed to load events'
   } finally {
     loading.value = false
   }
@@ -148,25 +142,80 @@ onMounted(() => {
 
 <template>
   <div class="space-y-8">
-    <!-- info -->
-    <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
-      <div class="space-y-3">
-        <p class="section-label">Command center</p>
-        <h1 class="text-3xl font-bold tracking-tight md:text-4xl">Your events :3</h1>
-        <p class="max-w-2xl text-sm leading-6 text-(--color-text-muted) md:text-base">
-          Here lies the power of Circa. Where dreams come true, where they come alive, and lay,
-          after their due time.
-        </p>
-      </div>
+    <div class="space-y-3">
+      <p class="section-label">Events</p>
+      <h1 class="text-3xl font-bold tracking-tight">Your events :3</h1>
+      <p class="max-w-2xl text-sm leading-6 text-(--color-text-muted)">
+        Here lies the power of Circa. Where dreams come true, where they come alive, and lay, after
+        their due time.
+      </p>
     </div>
 
     <!-- error -->
     <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
 
     <!-- event grid -->
-    <div class="grid gap-8">
+    <div class="grid gap-8 grid-cols-2">
+      <section class="glass-panel glass-panel--strong p-6 md:p-8">
+        <div class="flex items-center justify-between gap-4">
+          <div>
+            <p class="section-label">Events you have access to</p>
+            <h2 class="mt-2 text-2xl font-semibold">Event list</h2>
+          </div>
+
+          <div class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right">
+            <p class="section-label">Count</p>
+            <p class="mt-2 text-xl font-semibold">{{ events.length }}</p>
+          </div>
+
+          <div v-if="loading" class="mt-8 rounded-2xl border border-white/10 bg-white/4 p-5">
+            <p class="text-sm text-(--color-text-muted)">Loading events...</p>
+          </div>
+
+          <div
+            v-else-if="events.length === 0"
+            class="mt-8 rounded-2xl border border-dashed border-white/10 bg-white/4 p-5"
+          >
+            <p class="section-label">No events yet :c</p>
+            <p class="mt-2 text-sm text-(--color-text-muted)">
+              Create your first event using the form on the right :3
+            </p>
+          </div>
+
+          <div v-else class="mt-8 space-y-4">
+            <button
+              v-for="event in events"
+              :key="event.id"
+              type="button"
+              class="w-full rounded-2xl border border-white/10 bg-white/4 p-5 text-left transition hover:border-white/20 hover:bg-white/6"
+              @click="openEvent(event.id)"
+            >
+              <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                <div class="space-y-2">
+                  <h3 class="text-lg font-semibold">{{ event.name }}</h3>
+                  <p class="text-sm text-(--color-text-muted)">
+                    {{ event.description || 'No description yet :c' }}
+                  </p>
+                </div>
+
+                <span
+                  class="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs uppercase text-(--colkor-text-muted)"
+                >
+                  {{ statusLabel(event.status) }}
+                </span>
+              </div>
+
+              <div class="mt-4 space-y-1 text-sm text-(--color-text-muted)">
+                <p>{{ event.venue }}</p>
+                <p>{{ formatDate(event.starts_at) }} to {{ formatDate(event.ends_at) }}</p>
+              </div>
+            </button>
+          </div>
+        </div>
+      </section>
+
       <section class="glass-panel p-6 md:p-8">
-        <div>
+        <div class="space-y-2">
           <p class="section-label">Create</p>
           <h2 class="text-2xl font-semibold">New event</h2>
           <p class="text-sm leading-6 text-(--color-text-muted)">
@@ -180,7 +229,7 @@ onMounted(() => {
               >Event name</label
             >
             <input
-              id="even-name"
+              id="event-name"
               v-model="form.name"
               type="text"
               class="app-input"
@@ -214,7 +263,7 @@ onMounted(() => {
               v-model="form.description"
               class="app-input min-h-28 resize-none"
               placeholder="What's the event about? What are the goals? :3"
-            ></textarea>
+            />
           </div>
 
           <div class="grid gap-5 md:grid-cols-2">
@@ -223,7 +272,7 @@ onMounted(() => {
                 >Venue</label
               >
               <input
-                id="even-venue"
+                id="event-venue"
                 v-model="form.venue"
                 type="text"
                 class="app-input"
@@ -238,7 +287,7 @@ onMounted(() => {
                 >Timezone</label
               >
               <input
-                id="even-timezone"
+                id="event-timezone"
                 v-model="form.timezone"
                 type="text"
                 class="app-input"
@@ -256,7 +305,7 @@ onMounted(() => {
               >
               <!-- TODO: make thsi a date -->
               <input
-                id="even-starts-at"
+                id="event-starts-at"
                 v-model="form.starts_at"
                 type="text"
                 class="app-input"
@@ -270,7 +319,7 @@ onMounted(() => {
               >
               <!-- TODO: make thsi a date -->
               <input
-                id="even-ends-at"
+                id="event-ends-at"
                 v-model="form.ends_at"
                 type="text"
                 class="app-input"
@@ -279,17 +328,12 @@ onMounted(() => {
             </div>
           </div>
 
-          <p class="text-xs leading-5 text-(--color-text-muted)">
-            The dates are uhhh,,, work in progress for now....
-          </p>
-
           <button
             data-testid="create-event-submit"
             type="submit"
             :disabled="creating"
             class="app-button-primary w-full"
           >
-            <Plus class="h-4 w-4" />
             {{ creating ? 'Creating event...' : 'Create event' }}
           </button>
         </form>
