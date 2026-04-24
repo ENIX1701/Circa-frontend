@@ -4,15 +4,17 @@ import { useRoute } from 'vue-router'
 import { useEvents, type EventRecord, type EventStatus } from '@/composables/useEvents'
 
 const route = useRoute()
-const { getEvent, activateEvent, closeEvent, requestDestruction, cancelDestruction } = useEvents()
+const { archiveEvent, getEventExport, getEvent, activateEvent, closeEvent, requestDestruction, cancelDestruction } = useEvents()
 
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
 const event = ref<EventRecord | null>(null)
+const exporting = ref(false)
 
 const eventId = computed(() => String(route.params.id ?? ''))
 const isOwner = computed(() => event.value?.current_user_role === 'owner')
+const canArchive = computed(() => isOwner.value && (event.value?.status === 'closed' || event.value?.status === 'pending_destruction'))
 
 const canActivate = computed(() => isOwner.value && event.value?.status === 'draft')
 const canClose = computed(() => isOwner.value && event.value?.status === 'active')
@@ -113,6 +115,43 @@ async function handleCancelDestruction() {
     error.value = err instanceof Error ? err.message : 'Failed to cancel destruction'
   } finally {
     saving.value = false
+  }
+}
+
+async function handleArchive() {
+  if (!event.value) return
+
+  saving.value = true
+  error.value = ''
+
+  try {
+    event.value = await archiveEvent(event.value.id)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to archive event'
+  } finally {
+    saving.value = false
+  }
+}
+
+async function handleExport() {
+  if (!event.value) return
+
+  exporting.value = true
+  error.value = ''
+
+  try {
+    const payload = await getEventExport(event.value.id)
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${event.value.slug}-export.json`
+    link.click()
+    URL.revokeObjectURL(url)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to export event'
+  } finally {
+    exporting.value = false
   }
 }
 
@@ -242,6 +281,25 @@ watch(
               @click="handleCancelDestruction"
             >
               {{ saving ? 'Saving...' : 'Cancel destruction' }}
+            </button>
+
+            <button
+              v-if="canArchive"
+              type="button"
+              :disabled="saving"
+              class="app-button-secondary w-full"
+              @click="handleArchive"
+            >
+              {{ saving ? 'Saving...' : 'Archive event' }}
+            </button>
+
+            <button
+              type="button"
+              :disabled="exporting"
+              class="app-button-secondary w-full"
+              @click="handleExport"
+            >
+              {{ exporting ? 'Exporting...' : 'Export JSON' }}
             </button>
 
             <p

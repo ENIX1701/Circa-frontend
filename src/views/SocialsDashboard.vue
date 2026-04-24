@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { SocialPostRecord, useEvents } from '@/composables/useEvents';
+import { type SocialPostRecord, useEvents } from '@/composables/useEvents';
 import { computed, reactive, ref, watch } from 'vue';
 import { useRoute } from 'vue-router';
 

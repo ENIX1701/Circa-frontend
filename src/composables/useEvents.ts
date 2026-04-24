@@ -99,6 +99,14 @@ export interface UpdateSocialPostRequest {
   position?: number
 }
 
+export interface EventExportRecord {
+  exported_at: string
+  event: EventRecord
+  branding: EventBrandingRecord
+  planner_items: PlannerItemRecord[]
+  social_posts: SocialPostRecord[]
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   const contentType = response.headers.get('content-type') ?? ''
 
@@ -272,6 +280,21 @@ export const useEvents = () => {
     )
   }
 
+  async function archiveEvent(id: string): Promise<EventRecord> {
+    return requestJson<EventRecord>(
+      `/api/events/${encodeURIComponent(id)}/archive`,
+      {
+        method: 'POST'
+      }
+    )
+  }
+
+  async function getEventExport(id: string): Promise<EventExportRecord> {
+    return requestJson<EventExportRecord>(
+      `/api/events/${encodeURIComponent(id)}/export`
+    )
+  }
+
   return {
     listEvents,
     getEvent,
@@ -289,6 +312,8 @@ export const useEvents = () => {
     listSocialPosts,
     createSocialPost,
     updateSocialPost,
-    deleteSocialPost
+    deleteSocialPost,
+    archiveEvent,
+    getEventExport,
   }
 }
