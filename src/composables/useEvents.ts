@@ -71,6 +71,34 @@ export interface UpsertEventBrandingRequest {
   notes: string
 }
 
+export type SocialPostStatus = 'draft' | 'ready' | 'posted'
+
+export interface SocialPostRecord {
+  id: string
+  event_id: string
+  platform: string
+  title: string
+  body: string
+  status: SocialPostStatus
+  position: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreateSocialPostRequest {
+  platform: string
+  title: string
+  body?: string
+}
+
+export interface UpdateSocialPostRequest {
+  platform?: string
+  title?: string
+  body?: string
+  status?: SocialPostStatus
+  position?: number
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   const contentType = response.headers.get('content-type') ?? ''
 
@@ -209,6 +237,41 @@ export const useEvents = () => {
     )
   }
 
+  async function listSocialPosts(eventId: string): Promise<SocialPostRecord[]> {
+    return requestJson<SocialPostRecord[]>(
+      `/api/events/${encodeURIComponent(eventId)}/social-posts`
+    )
+  }
+
+  async function createSocialPost(eventId: string, payload: CreateSocialPostRequest): Promise<SocialPostRecord> {
+    return requestJson<SocialPostRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/social-posts`,
+      {
+        method: 'POST',
+        body: JSON.stringify(payload)
+      }
+    )
+  }
+
+  async function updateSocialPost(eventId: string, postId: string, payload: UpdateSocialPostRequest): Promise<SocialPostRecord> {
+    return requestJson<SocialPostRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/social-posts/${encodeURIComponent(postId)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload)
+      }
+    )
+  }
+
+  async function deleteSocialPost(eventId: string, postId: string): Promise<void> {
+    return requestNoContent(
+      `/api/events/${encodeURIComponent(eventId)}/social-posts/${encodeURIComponent(postId)}`,
+      {
+        method: 'DELETE'
+      }
+    )
+  }
+
   return {
     listEvents,
     getEvent,
@@ -223,5 +286,9 @@ export const useEvents = () => {
     deletePlannerItem,
     getEventBranding,
     upsertEventBranding,
+    listSocialPosts,
+    createSocialPost,
+    updateSocialPost,
+    deleteSocialPost
   }
 }

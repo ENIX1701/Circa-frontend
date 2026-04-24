@@ -92,7 +92,7 @@ function toRfc3339Local(value: string) {
     throw new Error('Please enter a valid date and time')
   }
 
-  const offsetMinutes = -date.getTimezoneOffset;
+  const offsetMinutes = -date.getTimezoneOffset();
   const sign = offsetMinutes >= 0 ? '+' : '-'
   const absoluteOffset = Math.abs(offsetMinutes)
   const offsetHours = pad(Math.floor(absoluteOffset / 60))

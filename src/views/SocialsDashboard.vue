@@ -1,7 +1,193 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import { SocialPostRecord, useEvents } from '@/composables/useEvents';
+import { computed, reactive, ref, watch } from 'vue';
+import { useRoute } from 'vue-router';
+
+const route = useRoute()
+const {
+  listSocialPosts,
+  createSocialPost,
+  updateSocialPost,
+  deleteSocialPost,
+} = useEvents()
+
+const eventId = computed(() => typeof route.params.id === 'string' ? route.params.id : '')
+
+const loading = ref(true)
+const creating = ref(false)
+const updatingPostId = ref('')
+const deletingPostId = ref('')
+const error = ref('')
+
+const posts = ref<SocialPostRecord[]>([])
+
+const form = reactive({
+  platform: 'Instagram',
+  title: '',
+  body: '',
+})
+
+async function loadPosts() {
+  if (!eventId.value) {
+    posts.value = []
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+  error.value = ''
+
+  try {
+    posts.value = await listSocialPosts(eventId.value)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load social posts'
+  } finally {
+    loading.value = false
+  }
+}
+
+async function handleCreatePost() {
+  if (!eventId.value) {
+    return
+  }
+
+  const title = form.title.trim()
+  const platform = form.platform.trim()
+  const body = form.body.trim()
+
+  if (!platform || !title) {
+    error.value = 'Platform and title are required'
+    return
+  }
+
+  creating.value = true
+  error.value = ''
+
+  try {
+    const created = await createSocialPost(eventId.value, {
+      platform, title, body: body || undefined
+    })
+
+    posts.value = [...posts.value, created].sort((a, b) => a.position - b.position)
+    form.title = ''
+    form.body = ''
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to create social post'
+  } finally {
+    creating.value = false
+  }
+}
+
+async function handleStatusChange(post: SocialPostRecord, status: SocialPostRecord['status']) {
+  if (!eventId.value) {
+    return
+  }
+
+  updatingPostId.value = post.id
+  error.value = ''
+
+  try {
+    const updated = await updateSocialPost(eventId.value, post.id, {status})
+    posts.value = posts.value.map((current) => current.id === updated.id ? updated : current)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to updating social post'
+  } finally {
+    updatingPostId.value = ''
+  }
+}
+
+async function removePost(postId: string) {
+  if (!eventId.value) {
+    return
+  }
+
+  deletingPostId.value = postId
+  error.value = ''
+
+  try {
+    await deleteSocialPost(eventId.value, postId)
+    posts.value = posts.value.filter((post) => post.id !== postId)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to create social post'
+  } finally {
+    deletingPostId.value = ''
+  }
+}
+
+watch(
+  eventId,
+  () => {
+    void loadPosts()
+  },
+  { immediate: true },
+)
+</script>
 
 <template>
-  <div>
-    <!-- menu with crate post, design graphic and settings tabs (alternatively move settings to icon in upper right) -->
+  <div class="space-y-6">
+    <div>
+      <p class="section-label">Socials</p>
+      <h1 class="text-3xl font-bold tracking-tight">Social drafts</h1>
+    </div>
+
+    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
+
+    <form class="glass-panel p-6 space-y-4" @submit.prevent="handleCreatePost">
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+          <label for="social-platform" class="block text-sm font-medium text-(--color-text-muted)">Platform</label>
+          <input id="social-platform" v-model="form.platform" type="text" class="app-input" placeholder="Instagram" />
+        </div>
+
+        <div class="space-y-2">
+          <label for="social-title" class="block text-sm font-medium text-(--color-text-muted)">Title</label>
+          <input id="social-title" v-model="form.title" type="text" class="app-input" placeholder="Launch teaser" />
+      </div>
+        </div>
+
+        <div class="space-y-2">
+          <label for="social-body" class="block text-sm font-medium text-(--color-text-muted)">Body</label>
+          <textarea id="social-body" v-model="form.body" class="app-input" placeholder="The copy goes here :3" />
+        </div>
+
+        <button type="submit" class="app-button-primary" :disabled="creating">
+          {{ creating ? 'Creating...' : 'Create post' }}
+        </button>
+    </form>
+
+    <section class="glass-panel p-6">
+      <div v-if="loading" class="text-sm text-(--color-text-muted)">
+        Loading social posts...
+      </div>
+
+      <div v-else-if="posts.length === 0" class="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5">
+        <p class="section-label">No posts yet</p>
+        <p class="mt-2 text-sm text-(--color-text-muted)">Create the first draft above! :3</p>
+      </div>
+
+      <div v-else class="space-y-4">
+        <article v-for="post in posts" :key="post.id" class="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
+          <div class="flex items-start justify-between gap-4">
+            <div>
+              <p class="text-xs uppercase text-(--color-text-muted)">{{ post.platform }}</p>
+              <h2 class="mt-1 text-lg font-semibold">{{ post.title }}</h2>
+            </div>
+
+            <button type="button" class="text-xs transition text-(--color-text-muted)" :disabled="deletingPostId == post.id" @click="removePost(post.id)">{{ deletingPostId === post.id ? 'Removing...' : 'Remove' }}</button>
+          </div>
+
+          <p v-if="post.body" class="text-sm text-(--color-text-muted)">{{ post.body }}</p>
+
+          <div class="flex items-center gap-3">
+            <label class="text-sm text-(--color-text-muted)">Status</label>
+            <select class="app-input max-w-40" :value="post.status" :disabled="updatingPostId === post.id" @change="handleStatusChange(post, ($event.target as HTMLSelectElement).value as SocialPostRecord['status'])">
+              <option value="draft">draft</option>
+              <option value="ready">ready</option>
+              <option value="posted">posted</option>
+            </select>
+          </div>
+        </article>
+      </div>
+    </section>
   </div>
 </template>

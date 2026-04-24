@@ -3,16 +3,22 @@
 ## scratchpad
 
 **TODO:**
-- [ ] login screen (with like qr or smth)
+- [x] login screen (with like qr or smth)
 - [ ] integration
-  - [ ] branding
+  - [x] branding
   - [ ] staff
-  - [ ] planner (postponed for now)
+  - [x] planner (version with no calendar/timeline for now)
   - [ ] logistics
-  - [ ] socials
-- [ ] token storage
+  - [x] socials
+- [x] token storage
 - [ ] role-based views
   - [ ] admin
   - [ ] organizer
   - [ ] staff
   - [ ] volunteer
+- [ ] typography in branding view
+- [ ] slight redesign (ditch the shadows and go for just clean)
+- [ ] dashboard layouts
+- [ ] codebase cleanup (who could've thought that max verstappen lvl development speed will lead to such chaos!)
+- [ ] deploy...
+- [ ] local caching
