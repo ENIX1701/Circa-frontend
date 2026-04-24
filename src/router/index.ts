@@ -2,8 +2,10 @@ import { createRouter, createWebHistory } from 'vue-router'
 import LoginPanel from '@/views/LoginPanel.vue'
 import TestInbox from '@/views/TestInbox.vue'
 import EventDetail from '@/views/EventDetail.vue'
-import type { Role } from '@/enums/Role'
-import { appSections, eventSections } from '@/config/sections'
+import PlannerDashboard from '@/views/PlannerDashboard.vue'
+import BrandingDashboard from '@/views/BrandingDashboard.vue'
+import SocialsDashboard from '@/views/SocialsDashboard.vue'
+import EventsHub from '@/views/EventsHub.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -25,15 +27,30 @@ const router = createRouter({
       meta: { public: true },
     },
     {
+      path: '/events',
+      name: 'events',
+      component: EventsHub,
+    },
+    {
       path: '/events/:id',
       name: 'event-detail',
       component: EventDetail,
     },
-    ...appSections.map((s) => ({
-      path: s.path,
-      name: s.name,
-      component: s.component,
-    })),
+    {
+      path: '/events/:id/planner',
+      name: 'event-planner',
+      component: PlannerDashboard,
+    },
+    {
+      path: '/events/:id/branding',
+      name: 'event-branding',
+      component: BrandingDashboard,
+    },
+    {
+      path: '/events/:id/socials',
+      name: 'event-socials',
+      component: SocialsDashboard,
+    },
   ],
 })
 
@@ -50,23 +67,6 @@ router.beforeEach((to) => {
     }
 
     return { path: '/' }
-  }
-
-  if (to.meta.roles && token) {
-    try {
-      const payloadSegment = token.split('.')[1]
-      if (!payloadSegment) {
-        return { name: 'login' }
-      }
-      const payload = JSON.parse(atob(payloadSegment))
-
-      const allowedRoles = to.meta.roles as Role[]
-      if (!allowedRoles.includes(payload.role)) {
-        return { path: '/' }
-      }
-    } catch {
-      return { name: 'login' }
-    }
   }
 })
 

@@ -1,5 +1,4 @@
 <script setup lang="ts">
-import { ArrowRight, CalendarRange, MapPin, Plus, ShieldCheck } from 'lucide-vue-next'
 import { onMounted, reactive, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useEvents, type EventRecord, type EventStatus } from '@/composables/useEvents'
@@ -12,14 +11,16 @@ const creating = ref(false)
 const error = ref('')
 const events = ref<EventRecord[]>([])
 
+const browserTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
+
 const form = reactive({
   name: '',
   slug: '',
   description: '',
   venue: '',
-  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
-  starts_at: '',
-  ends_at: '',
+  timezone: browserTimeZone,
+  starts_at_local: '',
+  ends_at_local: '',
 })
 
 const slugTouched = ref(false)
@@ -31,8 +32,8 @@ function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
+    .replace(/[^a-z0-9\\s-]/g, '')
+    .replace(/\\s+/g, '-')
     .replace(/-+/g, '-')
 }
 
@@ -52,9 +53,9 @@ function resetForm() {
   form.slug = ''
   form.description = ''
   form.venue = ''
-  form.timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
-  form.starts_at = ''
-  form.ends_at = ''
+  form.timezone = browserTimeZone
+  form.starts_at_local = ''
+  form.ends_at_local = ''
   slugTouched.value = false
 }
 
@@ -80,6 +81,30 @@ function formatDate(value: string) {
   }).format(new Date(value))
 }
 
+function pad(value: number) {
+  return String(value).padStart(2, '0')
+}
+
+function toRfc3339Local(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('Please enter a valid date and time')
+  }
+
+  const offsetMinutes = -date.getTimezoneOffset;
+  const sign = offsetMinutes >= 0 ? '+' : '-'
+  const absoluteOffset = Math.abs(offsetMinutes)
+  const offsetHours = pad(Math.floor(absoluteOffset / 60))
+  const offsetRemainder = pad(absoluteOffset % 60)
+
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`,
+    `${sign}${offsetHours}:${offsetRemainder}`,
+  ].join('')
+}
+
 async function loadEvents() {
   loading.value = true
   error.value = ''
@@ -101,8 +126,8 @@ async function handleCreateEvent() {
     !form.slug.trim() ||
     !form.venue.trim() ||
     !form.timezone.trim() ||
-    !form.starts_at.trim() ||
-    !form.ends_at.trim()
+    !form.starts_at_local.trim() ||
+    !form.ends_at_local.trim()
   ) {
     error.value = 'Pwease fill in all required fields QwQ'
     return
@@ -117,8 +142,8 @@ async function handleCreateEvent() {
       description: form.description.trim() || undefined,
       venue: form.venue.trim(),
       timezone: form.timezone.trim(),
-      starts_at: form.starts_at.trim(),
-      ends_at: form.ends_at.trim(),
+      starts_at: toRfc3339Local(form.starts_at_local),
+      ends_at: toRfc3339Local(form.ends_at_local),
     })
 
     resetForm()
@@ -303,11 +328,11 @@ onMounted(() => {
                 class="block text-sm font-medium text-(--color-text-muted)"
                 >Starts at</label
               >
-              <!-- TODO: make thsi a date -->
               <input
                 id="event-starts-at"
-                v-model="form.starts_at"
-                type="text"
+                v-model="form.starts_at_local"
+                type="datetime-local"
+                step="60"
                 class="app-input"
                 placeholder="uhhh"
               />
@@ -317,11 +342,11 @@ onMounted(() => {
               <label for="event-ends-at" class="block text-sm font-medium text-(--color-text-muted)"
                 >Ends at</label
               >
-              <!-- TODO: make thsi a date -->
               <input
                 id="event-ends-at"
-                v-model="form.ends_at"
-                type="text"
+                v-model="form.ends_at_local"
+                type="datetime-local"
+                step="60"
                 class="app-input"
                 placeholder="uhhh_v2"
               />
