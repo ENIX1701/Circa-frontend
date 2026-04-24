@@ -2,7 +2,6 @@
 import { computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { appSections, eventSections } from '@/config/sections'
-import ItemCard from './ItemCard.vue'
 
 interface NavItem {
   key: string
