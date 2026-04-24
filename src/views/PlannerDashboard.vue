@@ -1,95 +1,113 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { useRoute } from 'vue-router';
-
-interface PlannerItem {
-  id: string
-  title: string
-  done: boolean
-}
+import { useRoute } from 'vue-router'
+import { useEvents, type PlannerItemRecord} from '@/composables/useEvents'
 
 const route = useRoute()
 
+const {listPlannerItems, createPlannerItem, updatePlannerItem, deletePlannerItem} = useEvents()
+
 const eventId = computed(() => typeof route.params.id === 'string' ? route.params.id : '')
 
+const loading = ref(true)
+const creating = ref(false)
+const updatingItemId = ref('')
+const deletingItemId = ref('')
+const error = ref('')
 const newItemTitle = ref('')
-const items = ref<PlannerItem[]>([])
+const items = ref<PlannerItemRecord[]>([])
 
-const storageKey = computed(() => `circa:planner:${eventId.value}`)
-
-function defaultItems(): PlannerItem[] {
-  return [
-    { id: 'seed-1', title: 'Confirm event structure', done: false},
-    { id: 'seed-2', title: 'Lock event times', done: false},
-    { id: 'seed-3', title: 'Review pre-start checklist', done: true},
-  ]
-}
-
-function loadItems() {
+async function loadItems() {
   if (!eventId.value) {
     items.value = []
+    loading.value = false
     return
   }
 
-  const saved = localStorage.getItem(storageKey.value)
-
-  if (!saved) {
-    items.value = defaultItems()
-    return
-  }
+  loading.value = true
+  error.value = ''
 
   try {
-    const parsed = JSON.parse(saved) as PlannerItem[]
-    items.value = Array.isArray(parsed) ? parsed : defaultItems()
-  } catch {
-    items.value = defaultItems()
+    items.value = await listPlannerItems(eventId.value)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load planner items'
+  } finally {
+    loading.value = false
   }
 }
 
-watch(eventId, () => { loadItems() }, { immediate: true })
-watch(items, (value) => {
-  if (!eventId.value) {
-    return
-  }
-
-  localStorage.setItem(storageKey.value, JSON.stringify(value))
-}, { deep: true })
+watch(eventId, () => { void loadItems() }, { immediate: true })
 
 const completedCount = computed(() => items.value.filter((item) => item.done).length)
 const openCount = computed(() => items.value.filter((item) => !item.done).length)
 
-function addItem() {
+async function handleAddItem() {
   const title = newItemTitle.value.trim()
 
-  if (!title) {
+  if (!title || !eventId.value) {
     return
   }
 
-  items.value.unshift({
-    id: crypto.randomUUID(),
-    title,
-    done: false,
-  })
-
-  newItemTitle.value = ''
+  creating.value = true
+  error.value = ''
+  
+  try {
+    const created = await createPlannerItem(eventId.value, { title })
+    items.value = [...items.value, created].sort((a, b) => a.position - b.position)
+    newItemTitle.value = ''
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to create planner items'
+  } finally {
+    creating.value = false
+  }
 }
 
-function toggleItem(id: string) {
-  items.value = items.value.map((item) => item.id === id ? { ...item, done: !item.done } : item)
+async function toggleItem(item: PlannerItemRecord) {
+  if (!eventId.value) {
+    return
+  }
+
+  updatingItemId.value = item.id
+  error.value = ''
+
+  try {
+    const updated = await updatePlannerItem(eventId.value, item.id, { done: !item.done })
+    items.value = items.value.map((current) => current.id === updated.id ? updated : current)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to update planner items'
+  } finally {
+    updatingItemId.value = ''
+  }
 }
 
-function removeItem(id: string) {
-  items.value = items.value.filter((item) => item.id !== id)
+async function removeItem(itemId: string) {
+  if (!eventId.value) {
+    return
+  }
+
+  deletingItemId.value = itemId
+  error.value = ''
+
+  try {
+    await deletePlannerItem(eventId.value, itemId)
+    items.value = items.value.filter((item) => item.id !== itemId)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to delete planner item'
+  } finally {
+    deletingItemId.value = ''
+  }
 }
 </script>
 
 <template>
   <div class="space-y-8">
     <div class="space-y-3">
-      <p class="section-lable">Planner</p>
+      <p class="section-label">Planner</p>
       <h1 class="text-3xl font-bold tracking-tight">Event planner</h1>
       <p class="max-w-2xl text-sm text--(--color-text-muted)">Event-scoped planning boar</p>
     </div>
+
+    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
     
     <div class="grid gap-4 md:grid-cols-2">
       <section class="glass-panel p-5">
@@ -108,27 +126,36 @@ function removeItem(id: string) {
         <p class="break-all text-sm text-(--color-text-muted)">{{ eventId }}</p>
       </div>
 
-      <form @submit-prevent="addItem" class="mt-6 flex flex-cold gap-3 sm:flex-row">
-        <input v-model="newItemTitle" type="text" class="app-input flex-1" placeholder="Add new item! :3" />
-        <button type="submit" class="app-button-primary">
-          Add item
+      <form @submit.prevent="handleAddItem" class="mt-6 flex flex-cold gap-3 sm:flex-row">
+        <input v-model="newItemTitle" type="text" class="app-input flex-1" placeholder="Add new item! :3" :disabled="creating" />
+        <button type="submit" class="app-button-primary" :disabled="creating">
+          {{ creating ? 'Adding...' : 'Add item' }}
         </button>
       </form>
     </section>
 
     <section class="glass-panel glass-panel--strong p-6 md:p-8">
-      <div class="space-y-3">
-        <div v-if="items.length === 0" class="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5">
-          <p class="section-label">Nothing here :c</p>
-          <p class="mt-2 text-sm text-(--color-text-muted)">Add the first item above! Pwease QwQ</p>
-        </div>
+      <div v-if="loading" class="rounded-2xl border border-white/10 bg-white/5 p-5">
+        <p class="text-sm text-(--color-text-muted)">Loading planner items >w<</p>
+      </div>
 
-        <div v-for="item in items" :key="item.id" class="flex items-center gap-3 rounded-2xl border border-white/10 bg0white/5 px-4 py-3">
-          <input type="checkbox" :checked="item.done" @change="toggleItem(item.id)" />
+      <div v-else-if="items.length === 0" class="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5">
+        <p class="section label">Nothing here yet :c</p>
+        <p class="mt-2 text-sm text-(--color-text-muted)">Add the first item above! :D</p>
+      </div>
 
-          <span class="flex-1 text-sm" :class="item.done ? 'text-white/50 line-through' : 'text-white'">{ item.title }</span>
+      <div v-else class="space-y-3">
+        <div v-for="item in items" :key="item.id" class="flex items-center gap-3 rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+          <input type="checkbox" :checked="item.done" :disabled="updatingItemId === item.id" @change="toggleItem(item)" />
 
-          <button type="button" class="text-xs text-(--color-text-muted) transition" @click="removeItem(item.id)">Remove</button>
+          <div class="flex-1">
+            <p class="text-sm" :class="item.done ? 'text-white/50 line-through' : 'text-white'">{{ item.title }}</p>
+            <p v-if="item.notes" class="mt-1 text-sm text-(--color-text-muted)">{{ item.notes }}</p>
+          </div>
+
+          <button type="button" class="text-xs text-(--color-text-muted) transition" :disabled="deletingItemId === item.id" @click="removeItem(item.id)">
+            {{ deletingItemId === item.id ? 'Removing...' : 'Remove' }}
+          </button>
         </div>
       </div>
     </section>

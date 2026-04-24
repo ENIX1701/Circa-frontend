@@ -28,6 +28,29 @@ export interface CreateEventRequest {
   ends_at: string
 }
 
+export interface PlannerItemRecord {
+  id: string
+  event_id: string
+  title: string
+  notes: string
+  position: number
+  done: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface CreatePlannerItemRequest {
+  title: string
+  notes?: string
+}
+
+export interface UpdatePlannerItemRequest {
+  title?: string
+  notes?: string
+  position?: number
+  done?: boolean
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   const contentType = response.headers.get('content-type') ?? ''
 
@@ -49,7 +72,7 @@ function getToken() {
   return token
 }
 
-async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+async function request(path: string, init: RequestInit = {}): Promise<Response> {
   const headers = new Headers(init.headers ?? {})
   headers.set('Authorization', `Bearer ${getToken()}`)
 
@@ -66,7 +89,16 @@ async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> 
     throw new Error(await readErrorMessage(response))
   }
 
+  return response
+}
+
+async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
+  const response = await request(path, init)
   return (await response.json()) as T
+}
+
+async function requestNoContent(path: string, init: RequestInit = {}): Promise<void> {
+  await request(path, init)
 }
 
 export const useEvents = () => {
@@ -109,6 +141,40 @@ export const useEvents = () => {
     })
   }
 
+  async function listPlannerItems(eventId: string): Promise<PlannerItemRecord[]> {
+    return requestJson<PlannerItemRecord[]>(
+      `/api/events/${encodeURIComponent(eventId)}/planner-items`,
+    )
+  }
+
+  async function createPlannerItem(
+    eventId: string,
+    payload: CreatePlannerItemRequest,
+  ): Promise<PlannerItemRecord> {
+    return requestJson<PlannerItemRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/planner-items`,
+      { method: 'POST', body: JSON.stringify(payload) },
+    )
+  }
+
+  async function updatePlannerItem(
+    eventId: string,
+    itemId: string,
+    payload: UpdatePlannerItemRequest,
+  ): Promise<PlannerItemRecord> {
+    return requestJson<PlannerItemRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/planner-items/${encodeURIComponent(itemId)}`,
+      { method: 'PATCH', body: JSON.stringify(payload) },
+    )
+  }
+
+  async function deletePlannerItem(eventId: string, itemId: string): Promise<void> {
+    return requestNoContent(
+      `/api/events/${encodeURIComponent(eventId)}/planner-items/${encodeURIComponent(itemId)}`,
+      { method: 'DELETE' },
+    )
+  }
+
   return {
     listEvents,
     getEvent,
@@ -117,5 +183,9 @@ export const useEvents = () => {
     closeEvent,
     requestDestruction,
     cancelDestruction,
+    listPlannerItems,
+    createPlannerItem,
+    updatePlannerItem,
+    deletePlannerItem,
   }
 }
