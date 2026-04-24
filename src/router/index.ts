@@ -3,7 +3,7 @@ import LoginPanel from '@/views/LoginPanel.vue'
 import TestInbox from '@/views/TestInbox.vue'
 import EventDetail from '@/views/EventDetail.vue'
 import type { Role } from '@/enums/Role'
-import { appSections } from '@/config/sections'
+import { appSections, eventSections } from '@/config/sections'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -33,7 +33,6 @@ const router = createRouter({
       path: s.path,
       name: s.name,
       component: s.component,
-      meta: { roles: s.roles },
     })),
   ],
 })
