@@ -51,6 +51,26 @@ export interface UpdatePlannerItemRequest {
   done?: boolean
 }
 
+export interface EventBrandingRecord {
+  id: string | null,
+  event_id: string
+  event_name_override: string
+  tagline: string
+  primary_color: string
+  secondary_color: string
+  notes: string
+  created_at: string | null
+  updated_at: string | null
+}
+
+export interface UpsertEventBrandingRequest {
+  event_name_override: string
+  tagline: string
+  primary_color: string
+  secondary_color: string
+  notes: string
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   const contentType = response.headers.get('content-type') ?? ''
 
@@ -175,6 +195,20 @@ export const useEvents = () => {
     )
   }
 
+  async function getEventBranding(eventId: string): Promise<EventBrandingRecord> {
+    return requestJson<EventBrandingRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/branding`
+    )
+  }
+
+  async function upsertEventBranding(eventId: string, payload: UpsertEventBrandingRequest): Promise<EventBrandingRecord> {
+    return requestJson<EventBrandingRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/branding`, {
+        method: 'PUT', body: JSON.stringify(payload)
+      }
+    )
+  }
+
   return {
     listEvents,
     getEvent,
@@ -187,5 +221,7 @@ export const useEvents = () => {
     createPlannerItem,
     updatePlannerItem,
     deletePlannerItem,
+    getEventBranding,
+    upsertEventBranding,
   }
 }
