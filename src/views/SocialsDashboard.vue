@@ -18,6 +18,7 @@ const creating = ref(false)
 const updatingPostId = ref('')
 const deletingPostId = ref('')
 const error = ref('')
+const editingPostId = ref('')
 
 const posts = ref<SocialPostRecord[]>([])
 
@@ -25,6 +26,13 @@ const form = reactive({
   platform: 'Instagram',
   title: '',
   body: '',
+})
+
+const editForm = reactive({
+  platform: '',
+  title: '',
+  body: '',
+  status: 'draft' as SocialPostRecord['status'],
 })
 
 async function loadPosts() {
@@ -78,6 +86,52 @@ async function handleCreatePost() {
   }
 }
 
+function replacePost(updated: SocialPostRecord) {
+  posts.value = posts.value.map((post) => post.id === updated.id ? updated : post).sort((a, b) => a.position - b.position)
+}
+
+function beginEditPost(post: SocialPostRecord) {
+  editingPostId.value = post.id
+
+  editForm.platform = post.platform
+  editForm.title = post.title
+  editForm.body = post.body
+  editForm.status = post.status
+}
+
+function cancelEditPost() {
+  editingPostId.value = ''
+}
+
+async function handleUpdatePost(post: SocialPostRecord) {
+  if (!eventId.value) return
+
+  const platform = editForm.platform.trim()
+  const title = editForm.title.trim()
+  const body = editForm.body.trim()
+
+  if (!platform || !title) {
+    error.value = 'Platform and title are required'
+    return
+  }
+
+  updatingPostId.value = post.id
+  error.value = ''
+
+  try {
+    const updated = await updateSocialPost(eventId.value, post.id, {
+      platform, title, body, status: editForm.status,
+    })
+
+    replacePost(updated)
+    editingPostId.value = ''
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to update social post'
+  } finally {
+    updatingPostId.value = ''
+  }
+}
+
 async function handleStatusChange(post: SocialPostRecord, status: SocialPostRecord['status']) {
   if (!eventId.value) {
     return
@@ -88,9 +142,10 @@ async function handleStatusChange(post: SocialPostRecord, status: SocialPostReco
 
   try {
     const updated = await updateSocialPost(eventId.value, post.id, {status})
-    posts.value = posts.value.map((current) => current.id === updated.id ? updated : current)
+    
+    replacePost(updated)
   } catch (err) {
-    error.value = err instanceof Error ? err.message : 'Failed to updating social post'
+    error.value = err instanceof Error ? err.message : 'Failed to update social post'
   } finally {
     updatingPostId.value = ''
   }
@@ -167,25 +222,54 @@ watch(
 
       <div v-else class="space-y-4">
         <article v-for="post in posts" :key="post.id" class="rounded-2xl border border-white/10 bg-white/5 p-5 space-y-3">
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <p class="text-xs uppercase text-(--color-text-muted)">{{ post.platform }}</p>
-              <h2 class="mt-1 text-lg font-semibold">{{ post.title }}</h2>
+          <form v-if="editingPostId === post.id" class="space-y-4" @submit.prevent="handleUpdatePost(post)">
+            <div class="grid gap-4 md:grid-cols-2">
+              <input v-model="editForm.platform" type="text" class="app-input" placeholder="Platform" :disabled="updatingPostId === post.id" />
+              <input v-model="editForm.title" type="text" class="app-input" placeholder="What are you gonna call it? :3" :disabled="updatingPostId === post.id" />
             </div>
 
-            <button type="button" class="text-xs transition text-(--color-text-muted)" :disabled="deletingPostId == post.id" @click="removePost(post.id)">{{ deletingPostId === post.id ? 'Removing...' : 'Remove' }}</button>
-          </div>
+            <textarea v-model="editForm.body" type="text" class="app-input" placeholder="The copy goes here! :3" :disabled="updatingPostId === post.id"></textarea>
 
-          <p v-if="post.body" class="text-sm text-(--color-text-muted)">{{ post.body }}</p>
-
-          <div class="flex items-center gap-3">
-            <label class="text-sm text-(--color-text-muted)">Status</label>
-            <select class="app-input max-w-40" :value="post.status" :disabled="updatingPostId === post.id" @change="handleStatusChange(post, ($event.target as HTMLSelectElement).value as SocialPostRecord['status'])">
+            <select v-model="editForm.status" class="app-input max-w-40" :disabled="updatingPostId === post.id">
               <option value="draft">draft</option>
               <option value="ready">ready</option>
               <option value="posted">posted</option>
             </select>
-          </div>
+
+            <div class="flex items-center gap-3">
+              <button type="submit" class="app-button-primary" :disabled="updatingPostId === post.id">
+                {{ updatingPostId === post.id ? 'Saving...' : 'Save' }}
+              </button>
+              <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingPostId === post.id" @click="cancelEditPost">
+                Cancel
+              </button>
+            </div>
+          </form>
+
+          <template v-else>
+            <div class="flex items-start justify-between gap-4">
+              <div>
+                <p class="text-xs-uppercase text-(--color-text-muted)">{{ post.platform }}</p>
+                <h2 class="mt-1 text-lg font-semibold">{{ post.title }}</h2>
+              </div>
+
+              <div class="flex items-center gap-3">
+                <button type="button" class="text-xs transition text-(--color-text-muted)" @click="beginEditPost(post)">Edit</button>
+                <button type="button" class="text-xs transition text-(--color-text-muted)" :disabled="deletingPostId === post.id" @click="removePost(post.id)">{{deletingPostId === post.id ? 'Removing...' : 'Remove'}}</button>
+              </div>
+            </div>
+
+            <p v-if="post.body" class="text-sm text-(--color-text-muted)">{{ post.body }}</p>
+
+            <div class="flex items-center gap-3">
+              <label class="text-sm text-(--color-text-muted)">Status</label>
+              <select class="app-input max-w-40" :disabled="updatingPostId === post.id" @change="handleStatusChange(post, ($event.target as HTMLSelectElement).value as SocialPostRecord['status'])">
+                <option value="draft">draft</option>
+                <option value="ready">ready</option>
+                <option value="posted">posted</option>
+              </select>
+            </div>
+          </template>
         </article>
       </div>
     </section>
