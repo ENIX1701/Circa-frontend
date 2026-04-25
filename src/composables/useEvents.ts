@@ -122,6 +122,7 @@ export interface PlannerTimelineItemRecord {
   owner: string
   notes: string
   color: string
+  depends_on_item_id: string
   position: number
   created_at: string
   updated_at: string
@@ -136,6 +137,7 @@ export interface CreatePlannerTimelineItemRequest {
   owner?: string
   notes?: string
   color?: string
+  depends_on_item_id?: string
 }
 
 export interface UpdatePlannerTimelineItemRequest {
@@ -147,6 +149,7 @@ export interface UpdatePlannerTimelineItemRequest {
   owner?: string
   notes?: string
   color?: string
+  depends_on_item_id?: string
   position?: number
 }
 
@@ -293,7 +296,7 @@ export const useEvents = () => {
   async function updatePlannerTimelineItem(
     eventId: string,
     itemId: string,
-    payload: CreatePlannerTimelineItemRequest,
+    payload: UpdatePlannerTimelineItemRequest,
   ): Promise<PlannerTimelineItemRecord> {
     return requestJson<PlannerTimelineItemRecord>(
       `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items/${encodeURIComponent(itemId)}`,

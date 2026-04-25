@@ -101,7 +101,8 @@ async function removeItem(itemId: string) {
 const timelineItems = ref<PlannerTimelineItemRecord[]>([])
 const timelineLoading = ref(true)
 const timelineCreating = ref(false)
-const updatingTimelineItemId = ref('')
+const updatingTimelineItemId = ref('')  // I don't like this, because updating and editing are very similar
+const editingTimelineItemId = ref('')   // but this became somewhat of a mess, so editing will be the backend update for now
 const deletingTimelineItemId = ref('')
 
 const timelineForm = reactive({
@@ -115,16 +116,28 @@ const timelineForm = reactive({
   notes: '',
 })
 
+const timelineEditForm = reactive({
+  title: '',
+  item_type: 'task' as PlannerTimelineItemType,
+  starts_at_local: '',
+  ends_at_local: '',
+  status: 'planned' as PlannerTimelineStatus,
+  owner: '',
+  color: '',
+  notes: '',
+})
+
 const dayMs = 1000 * 60 * 60 * 24
 
 function pad(value: number) {
   return String(value).padStart(2, '0')
 }
 
-
 function toRfc3339Local(value: string) {
-  const date = new Date(value)
+  return toRfc3339Date(new Date(value))
+}
 
+function toRfc3339Date(date: Date) {
   if (Number.isNaN(date.getTime())) {
     throw new Error('Please enter a valid date and time')
   }
@@ -229,6 +242,84 @@ async function handleTimelineStatusChange(
   }
 }
 
+async function handleTimelineItemSave(item: PlannerTimelineItemRecord) {
+  if (!eventId.value) return
+
+  const title = timelineEditForm.title.trim()
+
+  if (!title || !timelineEditForm.starts_at_local || !timelineEditForm.ends_at_local) {
+    error.value = 'Timeline title, start and end are required! >:c'
+    return
+  }
+
+  updatingTimelineItemId.value = item.id
+  error.value = ''
+
+  try {
+    const updated = await updatePlannerTimelineItem(eventId.value, item.id, {
+      title,
+      item_type: timelineEditForm.item_type,
+      starts_at: toRfc3339Local(timelineEditForm.starts_at_local),
+      ends_at: toRfc3339Local(timelineEditForm.ends_at_local),
+      status: timelineEditForm.status,
+      owner: timelineEditForm.owner.trim(),
+      color: timelineEditForm.color.trim(),
+      notes: timelineEditForm.notes.trim(),
+    })
+
+    replaceTimelineItem(updated)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to update timeline item'
+  } finally {
+    updatingTimelineItemId.value = ''
+  }
+}
+
+function addDays(value: string, days: number) {
+  const date = new Date(value)
+  date.setDate(date.getDate() + days)
+  return toRfc3339Date(date)
+}
+
+async function shiftTimelineItem(item: PlannerTimelineItemRecord, days: number) {
+  if (!eventId.value) return
+
+  updatingTimelineItemId.value = item.id
+  error.value = ''
+
+  try {
+    const updated = await updatePlannerTimelineItem(eventId.value, item.id, {
+      starts_at: addDays(item.starts_at, days),
+      ends_at: addDays(item.ends_at, days)
+    })
+
+    replaceTimelineItem(updated)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to move timeline item'
+  } finally {
+    updatingTimelineItemId.value = ''
+  }
+}
+
+async function extendTimelineItem(item: PlannerTimelineItemRecord, days: number) {
+  if (!eventId.value || item.item_type === 'milestone') return
+
+  updatingTimelineItemId.value = item.id
+  error.value = ''
+
+  try {
+    const updated = await updatePlannerTimelineItem(eventId.value, item.id, {
+      ends_at: addDays(item.ends_at, days)
+    })
+
+    replaceTimelineItem(updated)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to resize timeline item'
+  } finally {
+    updatingTimelineItemId.value = ''
+  }
+}
+
 async function removeTimelineItem(itemId: string) {
   if (!eventId.value) return
 
@@ -243,6 +334,40 @@ async function removeTimelineItem(itemId: string) {
   } finally {
     deletingTimelineItemId.value = ''
   }
+}
+
+function toDateTimeLocalValue(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) return ''
+
+  // TODO: rethink/research a better way of storing dates
+  // this is horrendous (but easy ;3)
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}`
+  ].join('')
+}
+
+function replaceTimelineItem(updated: PlannerTimelineItemRecord) {
+  timelineItems.value = timelineItems.value.map((item) => item.id === updated.id ? updated : item).sort((a, b) => a.position - b.position)
+}
+
+function beginEditTimelineItem(item: PlannerTimelineItemRecord) {
+  editingTimelineItemId.value = item.id
+
+  timelineEditForm.title = item.title
+  timelineEditForm.item_type = item.item_type
+  timelineEditForm.starts_at_local = toDateTimeLocalValue(item.starts_at)
+  timelineEditForm.ends_at_local = toDateTimeLocalValue(item.ends_at)
+  timelineEditForm.status = item.status
+  timelineEditForm.owner = item.owner
+  timelineEditForm.color = item.color
+  timelineEditForm.notes = item.notes
+}
+
+function cancelEditTimelineItem() {
+  editingTimelineItemId.value = ''
 }
 
 // Gantt layout and helpers
@@ -390,7 +515,9 @@ watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
           <div v-for="item in timelineItems" :key="item.id" class="grid min-h-16 items-center rounded-xl border border-white/10 bg-white/5" :style="{ gridTemplateColumns: timelineGridTemplate}">
             <div class="sticky left-0 z-20 h-full px-3 py-3">
               <p class="text-sm font-semibold">{{ item.title }}</p>
-              <p class="mt-1 text-xs text-(--color-text-muted)">{{ item.item_type }} <span v-if="item.owner"> / {{ item.owner }}</span></p>
+              <p class="mt-1 text-xs text-(--color-text-muted)">
+                {{ item.item_type }} <span v-if="item.owner"> / {{ item.owner }}</span>
+              </p>
             </div>
 
             <div v-for="day in timelineDays" :key="`${item.id}-${day.toISOString()}`" class="h-full border border-white/10"/>
@@ -399,17 +526,52 @@ watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
               <span :class="item.item_type === 'milestone' ? 'block -rotate-45 text-center' : ''">{{ item.status }}</span>
             </div>
 
-            <div class="col-start-1 -col-end-1 flex items-center gap-3 px-3 py-3">
-              <select class="app-input max-w-40" :value="item.status" :disabled="updatingTimelineItemId === item.id" @change="handleTimelineStatusChange(item, ($event.target as HTMLSelectElement).value as PlannerTimelineStatus)">
-                <option value="planned">planned</option>
-                <option value="in_progress">in progress</option>
-                <option value="blocked">blocked</option>
-                <option value="done">done</option>
-              </select>
+            <div class="col-start-1 -col-end-1 px-3 py-3">
+              <form v-if="editingTimelineItemId === item.id" class="grid gap-3 md:grid-cols-2" @submit.prevent="handleTimelineItemSave(item)">
+                <input v-model="timelineEditForm.title" type="text" class="app-input" :disabled="updatingTimelineItemId === item.id" />
 
-              <button type="button" class="text-xs text-(--color-text-muted)" :disabled="deletingTimelineItemId === item.id" @click="removeTimelineItem(item.id)">{{ deletingTimelineItemId === item.id ? 'Removing...' : 'Remove' }}</button>
+                <select v-model="timelineEditForm.item_type" class="app-input" :disabled="updatingTimelineItemId === item.id">
+                  <option value="task">task</option>
+                  <option value="asset">asset</option>
+                  <option value="milestone">milestone</option>
+                </select>
 
-              <p v-if="item.notes" class="text-xs text-(--color-text-muted)">{{ item.notes }}</p>
+                <input v-model="timelineEditForm.starts_at_local" type="datetime-local" class="app-input" :disabled="updatingTimelineItemId === item.id" />
+                <input v-model="timelineEditForm.ends_at_local" type="datetime-local" class="app-input" :disabled="updatingTimelineItemId === item.id" />
+                
+                <select v-model="timelineEditForm.status" class="app-input" :disabled="updatingTimelineItemId === item.id">
+                  <option value="planned">planned</option>
+                  <option value="in_progress">in progress</option>
+                  <option value="blocked">blocked</option>
+                  <option value="done">done</option>
+                </select>
+
+                <input v-model="timelineEditForm.owner" type="text" class="app-input" placeholder="Owner" :disabled="updatingTimelineItemId === item.id" />
+                <input v-model="timelineEditForm.color" type="text" class="app-input" placeholder="#38bdf8" :disabled="updatingTimelineItemId === item.id" />
+                <textarea v-model="timelineEditForm.notes" class="app-input md:col-span-2" :disabled="updatingTimelineItemId === item.id" />
+
+                <div class="flex gap-3 md:col-span-2">
+                  <button type="submit" class="app-button-primary" :disabled="updatingTimelineItemId === item.id">Save</button>
+                  <button type="button" class="text-xs text-(--color-text-muted)" @click="cancelEditTimelineItem">Cancel</button>
+                </div>
+              </form>
+
+              <div v-else class="flex flex-wrap items-center gap-3">
+                <select class="app-input max-w-40" :value="item.status" :disabled="updatingTimelineItemId === item.id" @change="handleTimelineStatusChange(item, ($event.target as HTMLSelectElement).value as PlannerTimelineStatus)">
+                  <option value="planned">planned</option>
+                  <option value="in_progress">in progress</option>
+                  <option value="blocked">blocked</option>
+                  <option value="done">done</option>
+                </select>
+
+                <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="shiftTimelineItem(item, -1)">Move -1 day</button>
+                <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="shiftTimelineItem(item, 1)">Move 1 day</button>
+                <button v-if="item.item_type !== 'milestone'" type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="extendTimelineItem(item, 1)">Extend +1 day</button>
+                <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="beginEditTimelineItem(item)">Edit</button>
+                <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="removeTimelineItem(item)">{{ deletingTimelineItemId === item.id ? 'Removing...' : 'Remove' }}</button>
+
+                <p v-if="item.notes" class="text-xs text-(--color-text-muted)">{{ item.notes }}</p>
+              </div>
             </div>
           </div>
         </div>
