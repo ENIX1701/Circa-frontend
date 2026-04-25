@@ -105,6 +105,49 @@ export interface EventExportRecord {
   branding: EventBrandingRecord
   planner_items: PlannerItemRecord[]
   social_posts: SocialPostRecord[]
+  planner_timeline_items: PlannerTimelineItemRecord[]
+}
+
+export type PlannerTimelineItemType = 'task' | 'asset' | 'milestone'
+export type PlannerTimelineStatus = 'planned' | 'in_progress' | 'blocked' | 'done'
+
+export interface PlannerTimelineItemRecord {
+  id: string
+  event_id: string
+  title: string
+  item_type: PlannerTimelineItemType
+  starts_at: string
+  ends_at: string
+  status: PlannerTimelineStatus
+  owner: string
+  notes: string
+  color: string
+  position: number
+  created_at: string
+  updated_at: string
+}
+
+export interface CreatePlannerTimelineItemRequest {
+  title: string
+  item_type: PlannerTimelineItemType
+  starts_at: string
+  ends_at: string
+  status?: PlannerTimelineStatus
+  owner?: string
+  notes?: string
+  color?: string
+}
+
+export interface UpdatePlannerTimelineItemRequest {
+  title?: string
+  item_type?: PlannerTimelineItemType
+  starts_at?: string
+  ends_at?: string
+  status?: PlannerTimelineStatus
+  owner?: string
+  notes?: string
+  color?: string
+  position?: number
 }
 
 async function readErrorMessage(response: Response): Promise<string> {
@@ -231,6 +274,43 @@ export const useEvents = () => {
     )
   }
 
+  async function listPlannerTimelineItems(eventId: string): Promise<PlannerTimelineItemRecord[]> {
+    return requestJson<PlannerTimelineItemRecord[]>(
+      `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items`,
+    )
+  }
+
+  async function createPlannerTimelineItem(
+    eventId: string,
+    payload: CreatePlannerTimelineItemRequest,
+  ): Promise<PlannerTimelineItemRecord> {
+    return requestJson<PlannerTimelineItemRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items`,
+      { method: 'POST', body: JSON.stringify(payload) },
+    )
+  }
+
+  async function updatePlannerTimelineItem(
+    eventId: string,
+    itemId: string,
+    payload: CreatePlannerTimelineItemRequest,
+  ): Promise<PlannerTimelineItemRecord> {
+    return requestJson<PlannerTimelineItemRecord>(
+      `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items/${encodeURIComponent(itemId)}`,
+      { method: 'PATCH', body: JSON.stringify(payload) },
+    )
+  }
+
+  async function deletePlannerTimelineItem(
+    eventId: string,
+    itemId: string
+  ): Promise<void> {
+    return requestNoContent(
+      `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items/${encodeURIComponent(itemId)}`,
+      { method: 'DELETE' },
+    )
+  }
+
   async function getEventBranding(eventId: string): Promise<EventBrandingRecord> {
     return requestJson<EventBrandingRecord>(
       `/api/events/${encodeURIComponent(eventId)}/branding`
@@ -315,5 +395,9 @@ export const useEvents = () => {
     deleteSocialPost,
     archiveEvent,
     getEventExport,
+    listPlannerTimelineItems,
+    createPlannerTimelineItem,
+    updatePlannerTimelineItem,
+    deletePlannerTimelineItem,
   }
 }

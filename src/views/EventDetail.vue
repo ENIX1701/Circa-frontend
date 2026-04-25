@@ -14,7 +14,7 @@ const exporting = ref(false)
 
 const eventId = computed(() => String(route.params.id ?? ''))
 const isOwner = computed(() => event.value?.current_user_role === 'owner')
-const canArchive = computed(() => isOwner.value && (event.value?.status === 'closed' || event.value?.status === 'pending_destruction'))
+const isArchived = computed(() => event.value?.status === 'archived')
 
 const canActivate = computed(() => isOwner.value && event.value?.status === 'draft')
 const canClose = computed(() => isOwner.value && event.value?.status === 'active')
@@ -22,6 +22,8 @@ const canRequestDestruction = computed(() => isOwner.value && event.value?.statu
 const canCancelDestruction = computed(
   () => isOwner.value && event.value?.status === 'pending_destruction',
 )
+const canArchive = computed(() => isOwner.value && (event.value?.status === 'closed' || event.value?.status === 'pending_destruction'))
+const canExport = computed(() => Boolean(event.value))
 
 function statusLabel(status: EventStatus) {
   switch (status) {
@@ -295,15 +297,19 @@ watch(
 
             <button
               type="button"
-              :disabled="exporting"
+              :disabled="exporting || !canExport"
               class="app-button-secondary w-full"
               @click="handleExport"
             >
               {{ exporting ? 'Exporting...' : 'Export JSON' }}
             </button>
 
+            <p v-if="isArchived" class="rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-sm text-(--color-text-muted)">
+              This event is archived! Lifecycle changes are finished, but export is still available :3
+            </p>
+
             <p
-              v-if="!canActivate && !canClose && !canRequestDestruction && !canCancelDestruction"
+              v-if="!canActivate && !canClose && !canRequestDestruction && !canCancelDestruction && !canArchive"
               class="rounded-2xl border border-white/10 bg-white/4 px-4 py-3 text-sm text-(--color-text-muted)"
             >
               No lifecycle action is currently available :C

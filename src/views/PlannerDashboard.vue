@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, reactive } from 'vue'
 import { useRoute } from 'vue-router'
-import { useEvents, type PlannerItemRecord} from '@/composables/useEvents'
+import { useEvents, type PlannerItemRecord, type PlannerTimelineItemRecord, type PlannerTimelineItemType, type PlannerTimelineStatus} from '@/composables/useEvents'
 
 const route = useRoute()
 
-const {listPlannerItems, createPlannerItem, updatePlannerItem, deletePlannerItem} = useEvents()
+const {listPlannerItems, createPlannerItem, updatePlannerItem, deletePlannerItem, listPlannerTimelineItems, createPlannerTimelineItem, updatePlannerTimelineItem, deletePlannerTimelineItem} = useEvents()
 
 const eventId = computed(() => typeof route.params.id === 'string' ? route.params.id : '')
 
@@ -97,6 +97,222 @@ async function removeItem(itemId: string) {
     deletingItemId.value = ''
   }
 }
+
+const timelineItems = ref<PlannerTimelineItemRecord[]>([])
+const timelineLoading = ref(true)
+const timelineCreating = ref(false)
+const updatingTimelineItemId = ref('')
+const deletingTimelineItemId = ref('')
+
+const timelineForm = reactive({
+  title: '',
+  item_type: 'task' as PlannerTimelineItemType,
+  starts_at_local: '',
+  ends_at_local: '',
+  status: 'planned' as PlannerTimelineStatus,
+  owner: '',
+  color: '#38bdf8',
+  notes: '',
+})
+
+const dayMs = 1000 * 60 * 60 * 24
+
+function pad(value: number) {
+  return String(value).padStart(2, '0')
+}
+
+
+function toRfc3339Local(value: string) {
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error('Please enter a valid date and time')
+  }
+
+  const offsetMinutes = -date.getTimezoneOffset();
+  const sign = offsetMinutes >= 0 ? '+' : '-'
+  const absoluteOffset = Math.abs(offsetMinutes)
+  const offsetHours = pad(Math.floor(absoluteOffset / 60))
+  const offsetRemainder = pad(absoluteOffset % 60)
+
+  return [
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`,
+    `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`,
+    `${sign}${offsetHours}:${offsetRemainder}`,
+  ].join('')
+}
+
+function startOfDay(date: Date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate())
+}
+
+function formatTimelineDay(date: Date) {
+  return new Intl.DateTimeFormat(undefined, {
+    month: 'short',
+    day: 'numeric'
+  }).format(date)
+}
+
+async function loadTimelineItems() {
+  if (!eventId.value) {
+    timelineItems.value = []
+    timelineLoading.value = false
+    return
+  }
+
+  timelineLoading.value = true
+  error.value = ''
+
+  try {
+    timelineItems.value = await listPlannerTimelineItems(eventId.value)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load planner timeline'
+  } finally {
+    timelineLoading.value = false
+  }
+}
+
+async function handleCreateTimelineItem() {
+  if (!eventId.value) return
+
+  const title = timelineForm.title.trim()
+
+  if (!title || !timelineForm.starts_at_local || !timelineForm.ends_at_local) {
+    error.value = 'Timeline title, start and end are required! >:c'
+    return
+  }
+
+  timelineCreating.value = true
+  error.value = ''
+
+  try {
+    const created = await createPlannerTimelineItem(eventId.value, {
+      title,
+      item_type: timelineForm.item_type,
+      starts_at: toRfc3339Local(timelineForm.starts_at_local),
+      ends_at: toRfc3339Local(timelineForm.ends_at_local),
+      status: timelineForm.status,
+      owner: timelineForm.owner.trim() || undefined,
+      notes: timelineForm.notes.trim() || undefined,
+      color: timelineForm.color.trim() || undefined,
+    })
+
+    timelineItems.value = [...timelineItems.value, created].sort((a, b) => a.position - b.position)
+    timelineForm.title = ''
+    timelineForm.owner = ''
+    timelineForm.notes = ''
+    timelineForm.starts_at_local = ''
+    timelineForm.ends_at_local = ''
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to load planner timeline'
+  } finally {
+    timelineCreating.value = false
+  }
+}
+
+async function handleTimelineStatusChange(
+  item: PlannerTimelineItemRecord,
+  status: PlannerTimelineStatus,
+) {
+  if (!eventId.value) return
+
+  updatingTimelineItemId.value = item.id
+  error.value = ''
+
+  try {
+    const updated = await updatePlannerTimelineItem(eventId.value, item.id, { status })
+    timelineItems.value = timelineItems.value.map((current) => current.id === updated.id ? updated : current)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to update timeline item'
+  } finally {
+    updatingTimelineItemId.value = ''
+  }
+}
+
+async function removeTimelineItem(itemId: string) {
+  if (!eventId.value) return
+
+  deletingTimelineItemId.value = itemId
+  error.value = ''
+
+  try {
+    await deletePlannerTimelineItem(eventId.value, itemId)
+    timelineItems.value = timelineItems.value.filter((item) => item.id !== itemId)
+  } catch (err) {
+    error.value = err instanceof Error ? err.message : 'Failed to delete timeline item'
+  } finally {
+    deletingTimelineItemId.value = ''
+  }
+}
+
+// Gantt layout and helpers
+const timelineStart = computed(() => {
+  if (timelineItems.value.length === 0) {
+    return startOfDay(new Date())
+  }
+
+  const min = Math.min(...timelineItems.value.map((item) => new Date(item.starts_at).getTime()))
+  const date = startOfDay(new Date(min))
+  date.setDate(date.getDate() - 1)
+  return date
+})
+
+const timelineEnd = computed(() => {
+  if (timelineItems.value.length === 0) {
+    const date = startOfDay(new Date())
+    date.setDate(date.getDate() + 14)
+    return date
+  }
+
+  const max = Math.max(...timelineItems.value.map((item) => new Date(item.ends_at).getTime()))
+  const date = startOfDay(new Date(max))
+  date.setDate(date.getDate() + 1)
+  return date
+})
+
+const timelineDays = computed(() => {
+  const days: Date[] = []
+  const cursor = new Date(timelineStart.value)
+
+  while (cursor <= timelineEnd.value) {
+    days.push(new Date(cursor))
+    cursor.setDate(cursor.getDate() + 1)
+  }
+
+  return days
+})
+
+// this is really wonky but let's see how it works :/
+const timelineGridTemplate = computed(() => `16rem repeat(${timelineDays.value.length}, minmax(5rem, 1fr))`)
+
+function timelineColor(item: PlannerTimelineItemRecord) {
+  if (item.color) return item.color
+  
+  // TODO: make this proper later -> for now just make it exist x3
+  switch (item.item_type) {
+    case 'asset':
+      return 'color-primary'
+    case 'milestone':
+      return 'color-secondary'
+    case 'task':
+      return 'color-text-muted'
+  }
+}
+
+function timelineBarStyle(item: PlannerTimelineItemRecord) {
+  const start = startOfDay(new Date(item.starts_at))
+  const end = startOfDay(new Date(item.ends_at))
+  const offset = Math.max(0, Math.round((start.getTime() - timelineStart.value.getTime()) / dayMs))
+  const duration = item.item_type === 'milestone' ? 1 : Math.max(1, Math.round((end.getTime() - start.getTime() / dayMs) + 1))
+
+  return {
+    gridColumn: `${offset + 2} / span ${duration}`,
+    gridRow: '1',
+    backgroundColor: timelineColor(item),
+  }
+}
+
+watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
 </script>
 
 <template>
@@ -119,6 +335,86 @@ async function removeItem(itemId: string) {
         <p class="mt-2 text-3xl font-semibold">{{ completedCount }}</p>
       </section>
     </div>
+
+    <section class="glass-panel p-6 space-y-5">
+      <div class="flex items-center justify-between gap-4">
+        <div>
+          <p class="section-label">Timeline</p>
+        </div>
+      </div>
+
+      <form class="grid gap-4" @submit.prevent="handleCreateTimelineItem">
+        <input v-model="timelineForm.title" type="text" class="app-input" placeholder="Some very important asset" :disabled="timelineCreating" />
+
+        <select v-model="timelineForm.item_type" class="app-input" :disabled="timelineCreating">
+          <option value="task">task</option>
+          <option value="asset">asset</option>
+          <option value="milestone">milestone</option>
+        </select>
+
+        <input v-model="timelineForm.starts_at_local" type="datetime-local" class="app-input" :disabled="timelineCreating" />
+        <input v-model="timelineForm.ends_at_local" type="datetime-local" class="app-input" :disabled="timelineCreating" />
+
+      <div class="grid gap-4">
+        <input v-model="timelineForm.owner" type="text" class="app-input" placeholder="Owner" :disabled="timelineCreating" />
+
+        <!-- TODO: make into a color picker; no time for now -->
+        <input v-model="timelineForm.color" type="text" class="app-input" :disabled="timelineCreating" />
+
+        <textarea v-model="timelineForm.notes" class="app-input min-h-12" placeholder="notes" :disabled="timelineCreating" />
+      </div>
+
+        <button type="submit" class="app-button-primary" :disabled="timelineCreating">{{ timelineCreating ? 'Adding...' : 'Add' }}</button>
+      </form>
+    </section>
+
+    <section class="glass-panel glass-panel--strong p-6">
+      <div v-if="timelineLoading" class="text-sm text-(--color-text-muted)">
+        Loading timeline...
+      </div>
+
+      <div v-else-if="timelineItems.length === 0" class="rounded-2xl border border-dashed border-white/10 bg-white/5 p-5">
+        <p class="section-label">No items in the timeline yet :c</p>
+        <p class="mt-2 text-sm text-(--color-text-muted)">Add the first asset or milestone above :3</p>
+      </div>
+
+      <div v-else class="overflow-x-auto">
+        <div class="min-w-80 space-y-2">
+          <div class="grid items-center text-xs uppercase text-(--color-text-muted)" :style="{ gridTemplateColumns: timelineGridTemplate }">
+            <div class="sticky left-0 z-20 px-3 py-2">Item</div>
+            <div v-for="day in timelineDays" :key="day.toISOString()" class="border border-white/10 px-2 py-2">
+              {{ formatTimelineDay(day) }}
+            </div>
+          </div>
+
+          <div v-for="item in timelineItems" :key="item.id" class="grid min-h-16 items-center rounded-xl border border-white/10 bg-white/5" :style="{ gridTemplateColumns: timelineGridTemplate}">
+            <div class="sticky left-0 z-20 h-full px-3 py-3">
+              <p class="text-sm font-semibold">{{ item.title }}</p>
+              <p class="mt-1 text-xs text-(--color-text-muted)">{{ item.item_type }} <span v-if="item.owner"> / {{ item.owner }}</span></p>
+            </div>
+
+            <div v-for="day in timelineDays" :key="`${item.id}-${day.toISOString()}`" class="h-full border border-white/10"/>
+
+            <div class="z-10 mx-1 rounded-lg px-3 py-2 text-xs font-semibold text-black" :class="item.item_type === 'milestone' ? 'aspect-square w-10 rotate-45 justify-self-center' : ''" :style="timelineBarStyle(item)">
+              <span :class="item.item_type === 'milestone' ? 'block -rotate-45 text-center' : ''">{{ item.status }}</span>
+            </div>
+
+            <div class="col-start-1 -col-end-1 flex items-center gap-3 px-3 py-3">
+              <select class="app-input max-w-40" :value="item.status" :disabled="updatingTimelineItemId === item.id" @change="handleTimelineStatusChange(item, ($event.target as HTMLSelectElement).value as PlannerTimelineStatus)">
+                <option value="planned">planned</option>
+                <option value="in_progress">in progress</option>
+                <option value="blocked">blocked</option>
+                <option value="done">done</option>
+              </select>
+
+              <button type="button" class="text-xs text-(--color-text-muted)" :disabled="deletingTimelineItemId === item.id" @click="removeTimelineItem(item.id)">{{ deletingTimelineItemId === item.id ? 'Removing...' : 'Remove' }}</button>
+
+              <p v-if="item.notes" class="text-xs text-(--color-text-muted)">{{ item.notes }}</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
 
     <section class="glass-panel p-6">
       <div class="space-y-2">
