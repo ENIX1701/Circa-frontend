@@ -21,4 +21,4 @@
 - [ ] dashboard layouts
 - [ ] codebase cleanup (who could've thought that max verstappen lvl development speed will lead to such chaos!)
 - [ ] deploy...
-- [ ] local caching
+- [x] local caching

@@ -3,11 +3,10 @@ import {
   CalendarRange,
   LayoutGrid,
   MessageCircleDashed,
-  Package2,
   Palette,
-  Users,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
+import { Role } from '@/enums/Role'
 
 export interface AppSection {
   path: string
@@ -15,6 +14,7 @@ export interface AppSection {
   component: () => Promise<Component>
   icon: Component
   title: string
+  roles?: Role[]
 }
 
 export interface EventSection {

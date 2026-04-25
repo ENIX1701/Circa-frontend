@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useEventTheme } from './composables/useEventTheme'
 
 import DesktopSidebar from '@/components/DesktopSidebar.vue'
 import MobileNavbar from '@/components/MobileNavbar.vue'
 
 const route = useRoute()
 const isPublicRoute = computed(() => Boolean(route.meta.public))
+
+useEventTheme()
 </script>
 
 <template>

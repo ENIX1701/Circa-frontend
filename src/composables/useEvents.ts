@@ -58,6 +58,8 @@ export interface EventBrandingRecord {
   tagline: string
   primary_color: string
   secondary_color: string
+  theme_mode: 'dark' | 'light'
+  background_color: string
   notes: string
   created_at: string | null
   updated_at: string | null
@@ -68,6 +70,8 @@ export interface UpsertEventBrandingRequest {
   tagline: string
   primary_color: string
   secondary_color: string
+  theme_mode: 'dark' | 'light'
+  background_color: string
   notes: string
 }
 
@@ -203,60 +207,206 @@ async function requestNoContent(path: string, init: RequestInit = {}): Promise<v
   await request(path, init)
 }
 
+const memoryCache = new Map<string, unknown>()
+const inFlightRequests = new Map<string, Promise<unknown>>()
+
+function eventPath(id: string) {
+  return `/api/events/${encodeURIComponent(id)}`
+}
+
+function plannerItemsPath(eventId: string) {
+  return `/api/events/${encodeURIComponent(eventId)}/planner-items`
+}
+
+function plannerTimelineItemsPath(eventId: string) {
+  return `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items`
+}
+
+function brandingPath(eventId: string) {
+  return `/api/events/${encodeURIComponent(eventId)}/branding`
+}
+
+function socialPostsPath(eventId: string) {
+  return `/api/events/${encodeURIComponent(eventId)}/social-posts`
+}
+
+function eventExportPath(eventId: string) {
+  return `/api/events/${encodeURIComponent(eventId)}/export`
+}
+
+function getCached<T>(path: string): T | undefined {
+  return memoryCache.get(path) as T | undefined 
+}
+
+function setCached<T>(path: string, value: T) {
+  memoryCache.set(path, value)
+
+  window.dispatchEvent(new CustomEvent('circa:cache-updated', {
+    detail: { path, value },
+  }))
+}
+
+function invalidateCached(path: string) {
+  memoryCache.delete(path)
+}
+
+function sortByPosition<T extends { position: number }>(items: T[]) {
+  return [...items].sort((a, b) => a.position - b.position)
+}
+
+function upsertCachedItem<T extends { id: string }>(path: string, item: T) {
+  const cached = getCached<T[]>(path)
+
+  if (!cached) return
+
+  setCached(path, cached.map((current) => current.id === item.id ? item : current))
+}
+
+function upsertCachedPositionedItem<T extends { id: string, position: number }>(path: string, item: T) {
+  const cached = getCached<T[]>(path)
+
+  if (!cached) return
+
+  const withoutCurrent = cached.filter((current) => current.id !== item.id)
+  setCached(path, sortByPosition([...withoutCurrent, item]))
+}
+
+function removeCachedItem<T extends { id: string }>(path: string, itemId: string) {
+  const cached = getCached<T[]>(path)
+
+  if (!cached) return
+  
+  setCached(path, cached.filter((item) => item.id !== itemId))
+}
+
+function cacheEvent(event: EventRecord) {
+  setCached(eventPath(event.id), event)
+  upsertCachedItem('/api/events', event)
+}
+
+async function cachedRequestJson<T>(path: string): Promise<T> {
+  const cached = getCached<T>(path)
+
+  if (cached !== undefined) {
+    if (!inFlightRequests.has(path)) {
+      const refresh = requestJson<T>(path).then((fresh) => {
+        setCached(path, fresh)
+        return fresh
+      }).finally(() => {inFlightRequests.delete(path)})
+
+      inFlightRequests.set(path, refresh)
+      void refresh.catch(() => {})
+    }
+
+    return cached
+  }
+
+  const existing = inFlightRequests.get(path) as Promise<T> | undefined
+
+  if (existing) {
+    return existing
+  }
+
+  const requestPromise = requestJson<T>(path).then((fresh) => {
+    setCached(path, fresh)
+    return fresh
+  }).finally(() => {inFlightRequests.delete(path)})
+
+  inFlightRequests.set(path, requestPromise)
+  return requestPromise
+}
+
+function clearEventsCache() {
+  memoryCache.clear()
+  inFlightRequests.clear()
+}
+
 export const useEvents = () => {
   async function listEvents(): Promise<EventRecord[]> {
-    return requestJson<EventRecord[]>('/api/events')
+    return cachedRequestJson<EventRecord[]>('/api/events')
   }
 
   async function getEvent(id: string): Promise<EventRecord> {
-    return requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}`)
+    return cachedRequestJson<EventRecord>(eventPath(id))
   }
 
   async function createEvent(payload: CreateEventRequest): Promise<EventRecord> {
-    return requestJson<EventRecord>('/api/events', {
+    const created = await requestJson<EventRecord>('/api/events', {
       method: 'POST',
       body: JSON.stringify(payload),
     })
+
+    setCached(eventPath(created.id), created)
+
+    const cachedEvents = getCached<EventRecord[]>('/api/events')
+    if (cachedEvents) {
+      setCached('/api/events', [created, ...cachedEvents.filter((event) => event.id !== created.id)])
+    }
+
+    return created
   }
 
   async function activateEvent(id: string): Promise<EventRecord> {
-    return requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/activate`, {
+    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/activate`, {
       method: 'POST',
     })
+
+    cacheEvent(updated)
+    invalidateCached(eventExportPath(updated.id))
+
+    return updated
   }
 
   async function closeEvent(id: string): Promise<EventRecord> {
-    return requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/close`, {
+    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/close`, {
       method: 'POST',
     })
+
+    cacheEvent(updated)
+    invalidateCached(eventExportPath(updated.id))
+
+    return updated
   }
 
   async function requestDestruction(id: string): Promise<EventRecord> {
-    return requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/request-destruction`, {
+    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/request-destruction`, {
       method: 'POST',
     })
+
+    cacheEvent(updated)
+    invalidateCached(eventExportPath(updated.id))
+
+    return updated
   }
 
   async function cancelDestruction(id: string): Promise<EventRecord> {
-    return requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/cancel-destruction`, {
+    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/cancel-destruction`, {
       method: 'POST',
     })
+
+    cacheEvent(updated)
+    invalidateCached(eventExportPath(updated.id))
+
+    return updated
   }
 
   async function listPlannerItems(eventId: string): Promise<PlannerItemRecord[]> {
-    return requestJson<PlannerItemRecord[]>(
-      `/api/events/${encodeURIComponent(eventId)}/planner-items`,
-    )
+    return cachedRequestJson<PlannerItemRecord[]>(plannerItemsPath(eventId))
   }
 
   async function createPlannerItem(
     eventId: string,
     payload: CreatePlannerItemRequest,
   ): Promise<PlannerItemRecord> {
-    return requestJson<PlannerItemRecord>(
-      `/api/events/${encodeURIComponent(eventId)}/planner-items`,
+    const created = await requestJson<PlannerItemRecord>(
+      plannerItemsPath(eventId),
       { method: 'POST', body: JSON.stringify(payload) },
     )
+
+    upsertCachedPositionedItem(plannerItemsPath(eventId), created)
+    invalidateCached(eventExportPath(eventId))
+
+    return created
   }
 
   async function updatePlannerItem(
@@ -264,33 +414,44 @@ export const useEvents = () => {
     itemId: string,
     payload: UpdatePlannerItemRequest,
   ): Promise<PlannerItemRecord> {
-    return requestJson<PlannerItemRecord>(
+    const updated = await requestJson<PlannerItemRecord>(
       `/api/events/${encodeURIComponent(eventId)}/planner-items/${encodeURIComponent(itemId)}`,
       { method: 'PATCH', body: JSON.stringify(payload) },
     )
+
+    upsertCachedPositionedItem(plannerItemsPath(eventId), updated)
+    invalidateCached(eventExportPath(eventId))
+
+    return updated
   }
 
   async function deletePlannerItem(eventId: string, itemId: string): Promise<void> {
-    return requestNoContent(
+    await requestNoContent(
       `/api/events/${encodeURIComponent(eventId)}/planner-items/${encodeURIComponent(itemId)}`,
       { method: 'DELETE' },
     )
+
+    removeCachedItem<PlannerItemRecord>(plannerItemsPath(eventId), itemId)
+    invalidateCached(eventExportPath(eventId))
   }
 
   async function listPlannerTimelineItems(eventId: string): Promise<PlannerTimelineItemRecord[]> {
-    return requestJson<PlannerTimelineItemRecord[]>(
-      `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items`,
-    )
+    return cachedRequestJson<PlannerTimelineItemRecord[]>(plannerTimelineItemsPath(eventId))
   }
 
   async function createPlannerTimelineItem(
     eventId: string,
     payload: CreatePlannerTimelineItemRequest,
   ): Promise<PlannerTimelineItemRecord> {
-    return requestJson<PlannerTimelineItemRecord>(
+    const created = await requestJson<PlannerTimelineItemRecord>(
       `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items`,
       { method: 'POST', body: JSON.stringify(payload) },
     )
+
+    upsertCachedPositionedItem(plannerTimelineItemsPath(eventId), created)
+    invalidateCached(eventExportPath(eventId))
+
+    return created
   }
 
   async function updatePlannerTimelineItem(
@@ -298,84 +459,109 @@ export const useEvents = () => {
     itemId: string,
     payload: UpdatePlannerTimelineItemRequest,
   ): Promise<PlannerTimelineItemRecord> {
-    return requestJson<PlannerTimelineItemRecord>(
+    const updated = await requestJson<PlannerTimelineItemRecord>(
       `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items/${encodeURIComponent(itemId)}`,
       { method: 'PATCH', body: JSON.stringify(payload) },
     )
+
+    upsertCachedPositionedItem(plannerTimelineItemsPath(eventId), updated)
+    invalidateCached(eventExportPath(eventId))
+
+    return updated
   }
 
   async function deletePlannerTimelineItem(
     eventId: string,
     itemId: string
   ): Promise<void> {
-    return requestNoContent(
+    await requestNoContent(
       `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items/${encodeURIComponent(itemId)}`,
       { method: 'DELETE' },
     )
+
+    removeCachedItem<PlannerTimelineItemRecord>(plannerTimelineItemsPath(eventId), itemId)
+    invalidateCached(eventExportPath(eventId))
   }
 
   async function getEventBranding(eventId: string): Promise<EventBrandingRecord> {
-    return requestJson<EventBrandingRecord>(
-      `/api/events/${encodeURIComponent(eventId)}/branding`
-    )
+    return cachedRequestJson<EventBrandingRecord>(brandingPath(eventId))
   }
 
   async function upsertEventBranding(eventId: string, payload: UpsertEventBrandingRequest): Promise<EventBrandingRecord> {
-    return requestJson<EventBrandingRecord>(
-      `/api/events/${encodeURIComponent(eventId)}/branding`, {
+    const branding = await requestJson<EventBrandingRecord>(
+      brandingPath(eventId), {
         method: 'PUT', body: JSON.stringify(payload)
       }
     )
+
+    setCached(brandingPath(eventId), branding)
+    invalidateCached(eventExportPath(eventId))
+
+    return branding
   }
 
   async function listSocialPosts(eventId: string): Promise<SocialPostRecord[]> {
-    return requestJson<SocialPostRecord[]>(
-      `/api/events/${encodeURIComponent(eventId)}/social-posts`
-    )
+    return cachedRequestJson<SocialPostRecord[]>(socialPostsPath(eventId))
   }
 
   async function createSocialPost(eventId: string, payload: CreateSocialPostRequest): Promise<SocialPostRecord> {
-    return requestJson<SocialPostRecord>(
+    const created = await requestJson<SocialPostRecord>(
       `/api/events/${encodeURIComponent(eventId)}/social-posts`,
       {
         method: 'POST',
         body: JSON.stringify(payload)
       }
     )
+
+    upsertCachedPositionedItem(socialPostsPath(eventId), created)
+    invalidateCached(eventExportPath(eventId))
+
+    return created
   }
 
   async function updateSocialPost(eventId: string, postId: string, payload: UpdateSocialPostRequest): Promise<SocialPostRecord> {
-    return requestJson<SocialPostRecord>(
+    const updated = await requestJson<SocialPostRecord>(
       `/api/events/${encodeURIComponent(eventId)}/social-posts/${encodeURIComponent(postId)}`,
       {
         method: 'PATCH',
         body: JSON.stringify(payload)
       }
     )
+
+    upsertCachedPositionedItem(socialPostsPath(eventId), updated)
+    invalidateCached(eventExportPath(eventId))
+
+    return updated
   }
 
   async function deleteSocialPost(eventId: string, postId: string): Promise<void> {
-    return requestNoContent(
+    await requestNoContent(
       `/api/events/${encodeURIComponent(eventId)}/social-posts/${encodeURIComponent(postId)}`,
       {
         method: 'DELETE'
       }
     )
+
+    removeCachedItem<SocialPostRecord>(socialPostsPath(eventId), postId)
+    invalidateCached(eventExportPath(eventId))
   }
 
   async function archiveEvent(id: string): Promise<EventRecord> {
-    return requestJson<EventRecord>(
+    const updated = await requestJson<EventRecord>(
       `/api/events/${encodeURIComponent(id)}/archive`,
       {
         method: 'POST'
       }
     )
+
+    cacheEvent(updated)
+    invalidateCached(eventExportPath(updated.id))
+
+    return updated
   }
 
   async function getEventExport(id: string): Promise<EventExportRecord> {
-    return requestJson<EventExportRecord>(
-      `/api/events/${encodeURIComponent(id)}/export`
-    )
+    return cachedRequestJson<EventExportRecord>(eventExportPath(id))
   }
 
   return {
@@ -402,5 +588,6 @@ export const useEvents = () => {
     createPlannerTimelineItem,
     updatePlannerTimelineItem,
     deletePlannerTimelineItem,
+    clearEventsCache,
   }
 }

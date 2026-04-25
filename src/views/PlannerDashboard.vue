@@ -568,7 +568,7 @@ watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
                 <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="shiftTimelineItem(item, 1)">Move 1 day</button>
                 <button v-if="item.item_type !== 'milestone'" type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="extendTimelineItem(item, 1)">Extend +1 day</button>
                 <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="beginEditTimelineItem(item)">Edit</button>
-                <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="removeTimelineItem(item)">{{ deletingTimelineItemId === item.id ? 'Removing...' : 'Remove' }}</button>
+                <button type="button" class="text-xs text-(--color-text-muted)" :disabled="updatingTimelineItemId === item.id" @click="removeTimelineItem(item.id)">{{ deletingTimelineItemId === item.id ? 'Removing...' : 'Remove' }}</button>
 
                 <p v-if="item.notes" class="text-xs text-(--color-text-muted)">{{ item.notes }}</p>
               </div>

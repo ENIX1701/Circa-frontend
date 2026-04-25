@@ -19,6 +19,8 @@ const form = reactive({
   tagline: '',
   primary_color: '#8b5cf6',
   secondary_color: '#521bca',
+  theme_mode: 'dark' as EventBrandingRecord['theme_mode'],
+  background_color: '#0f0f12',
   notes: '',
 })
 
@@ -27,6 +29,8 @@ function applyBranding(branding: EventBrandingRecord) {
   form.tagline = branding.tagline
   form.primary_color = branding.primary_color?.trim() || '#8b5cf6'
   form.secondary_color = branding.secondary_color?.trim() || '#521bca'
+  form.theme_mode = branding.theme_mode || 'dark'
+  form.background_color = branding.background_color?.trim() || '#0f0f12'
   form.notes = branding.notes
 }
 
@@ -65,11 +69,20 @@ async function handleSave() {
       tagline: form.tagline.trim(),
       primary_color: form.primary_color.trim(),
       secondary_color: form.secondary_color.trim(),
+      theme_mode: form.theme_mode,
+      background_color: form.background_color.trim(),
       notes: form.notes.trim(),
     })
 
     applyBranding(branding)
     saved.value = true
+
+    window.dispatchEvent(new CustomEvent('circa:branding-updated', {
+      detail: {
+        eventId: eventId.value,
+        branding,
+      }
+    }))
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to save branding :c'
   } finally {
@@ -133,6 +146,18 @@ watch(
         <ColorPicker title="secondary" v-model:color="form.secondary_color"/>
       </div>
 
+      <div class="grid gap-4 md:grid-cols-2">
+        <div class="space-y-2">
+          <label for="theme-mode" class="block text-sm font-medium text-(--color-text-muted)">Theme mode</label>
+          <select id="theme-mode" v-model="form.theme_mode" class="app-input">
+            <option value="dark">dark</option>
+            <option value="light">light</option>
+          </select>
+        </div>
+
+        <ColorPicker title="background" v-model:color="form.background_color" />
+      </div>
+
       <div class="space-y-2">
         <label for="branding-notes" class="block text-sm font-medium text-(--color-text-muted)"
           >Notes</label
@@ -153,7 +178,7 @@ watch(
     <section class="glass-panel p-6">
       <p class="section-label">Preview</p>
 
-      <div class="mt-4 rounded-2xl border border-white/10 p-5" :style="{background: `linear-gradient(135deg, ${form.primary_color || '#8b5cf6'}, ${form.secondary_color || '#521bca'})`}">
+      <div class="mt-4 rounded-2xl border border-white/10 p-5" :style="{background: `linear-gradient(135deg, ${form.background_color},  ${ form.primary_color || '#8b5cf6'}, ${form.secondary_color || '#521bca'})`}">
         <p class="text-xs uppercase text-white">Event preview</p>
         <h2 class="mt-3 text-2xl font-bold text-white">{{ form.event_name_override || 'Event name' }}</h2>
         <p class="mt-2 text-sm text-white">{{ form.tagline || 'Tagline goes here' }}</p>
