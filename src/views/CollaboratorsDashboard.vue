@@ -115,7 +115,7 @@ watch(eventId, () => {void loadCollaborators()}, {immediate: true})
 <template>
     <div class="space-y-6">
         <div>
-            <p class="section">Collaborators</p>
+            <p class="section-label">Collaborators</p>
             <h1 class="text-3xl font-bold tracking-tight">Event team</h1>
             <p class="mt-2 text-sm text-(--color-text-muted)">Manage who can access and edit this event! :3</p>
         </div>

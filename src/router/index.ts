@@ -7,6 +7,7 @@ import BrandingDashboard from '@/views/BrandingDashboard.vue'
 import SocialsDashboard from '@/views/SocialsDashboard.vue'
 import EventsHub from '@/views/EventsHub.vue'
 import CollaboratorsDashboard from '@/views/CollaboratorsDashboard.vue'
+import StaffDashboard from '@/views/StaffDashboard.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -56,6 +57,11 @@ const router = createRouter({
       path: '/events/:id/collaborators',
       name: 'event-collaborators',
       component: CollaboratorsDashboard,
+    },
+    {
+      path: '/events/:id/staff',
+      name: 'event-staff',
+      component: StaffDashboard,
     },
   ],
 })

@@ -72,4 +72,11 @@ export const eventSections: EventSection[] = [
     icon: Users,
     component: () => import('@/views/CollaboratorsDashboard.vue'),
   },
+  {
+    key: 'staff',
+    title: 'Staff',
+    suffix: '/staff',
+    icon: Users,
+    component: () => import('@/views/StaffDashboard.vue'),
+  },
 ]
