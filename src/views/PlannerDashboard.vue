@@ -1,11 +1,11 @@
 <script setup lang="ts">
 import { computed, ref, watch, reactive } from 'vue'
 import { useRoute } from 'vue-router'
-import { useEvents, type PlannerItemRecord, type PlannerTimelineItemRecord, type PlannerTimelineItemType, type PlannerTimelineStatus} from '@/composables/useEvents'
+import { useEvents, type EventCollaboratorRecord, type PlannerItemRecord, type PlannerTimelineItemRecord, type PlannerTimelineItemType, type PlannerTimelineStatus} from '@/composables/useEvents'
 
 const route = useRoute()
 
-const {listPlannerItems, createPlannerItem, updatePlannerItem, deletePlannerItem, listPlannerTimelineItems, createPlannerTimelineItem, updatePlannerTimelineItem, deletePlannerTimelineItem} = useEvents()
+const {listEventCollaborators, listPlannerItems, createPlannerItem, updatePlannerItem, deletePlannerItem, listPlannerTimelineItems, createPlannerTimelineItem, updatePlannerTimelineItem, deletePlannerTimelineItem} = useEvents()
 
 const eventId = computed(() => typeof route.params.id === 'string' ? route.params.id : '')
 
@@ -16,6 +16,7 @@ const deletingItemId = ref('')
 const error = ref('')
 const newItemTitle = ref('')
 const items = ref<PlannerItemRecord[]>([])
+const collaborators = ref<EventCollaboratorRecord[]>([])
 
 async function loadItems() {
   if (!eventId.value) {
@@ -114,6 +115,7 @@ const timelineForm = reactive({
   owner: '',
   color: '#38bdf8',
   notes: '',
+  assigned_user_id: '',
 })
 
 const timelineEditForm = reactive({
@@ -125,6 +127,7 @@ const timelineEditForm = reactive({
   owner: '',
   color: '',
   notes: '',
+  assigned_user_id: '',
 })
 
 const dayMs = 1000 * 60 * 60 * 24
@@ -185,6 +188,23 @@ async function loadTimelineItems() {
   }
 }
 
+async function loadCollaborators() {
+  if (!eventId.value) {
+    collaborators.value = []
+    return
+  }
+
+  try {
+    collaborators.value = await listEventCollaborators(eventId.value)
+  } catch {
+    collaborators.value = []
+  }
+}
+
+watch(eventId, () => {
+  void loadCollaborators()
+}, {immediate: true})
+
 async function handleCreateTimelineItem() {
   if (!eventId.value) return
 
@@ -208,6 +228,7 @@ async function handleCreateTimelineItem() {
       owner: timelineForm.owner.trim() || undefined,
       notes: timelineForm.notes.trim() || undefined,
       color: timelineForm.color.trim() || undefined,
+      assigned_user_id: timelineForm.assigned_user_id || undefined,
     })
 
     timelineItems.value = [...timelineItems.value, created].sort((a, b) => a.position - b.position)
@@ -216,6 +237,7 @@ async function handleCreateTimelineItem() {
     timelineForm.notes = ''
     timelineForm.starts_at_local = ''
     timelineForm.ends_at_local = ''
+    timelineForm.assigned_user_id = ''
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to load planner timeline'
   } finally {
@@ -265,6 +287,7 @@ async function handleTimelineItemSave(item: PlannerTimelineItemRecord) {
       owner: timelineEditForm.owner.trim(),
       color: timelineEditForm.color.trim(),
       notes: timelineEditForm.notes.trim(),
+      assigned_user_id: timelineEditForm.assigned_user_id || undefined,
     })
 
     replaceTimelineItem(updated)
@@ -364,10 +387,19 @@ function beginEditTimelineItem(item: PlannerTimelineItemRecord) {
   timelineEditForm.owner = item.owner
   timelineEditForm.color = item.color
   timelineEditForm.notes = item.notes
+  timelineEditForm.assigned_user_id = item.assigned_user_id
 }
 
 function cancelEditTimelineItem() {
   editingTimelineItemId.value = ''
+}
+
+function collaboratorName(userId: string) {
+  const collaborator = collaborators.value.find((member) => member.user_id === userId)
+  
+  if (!collaborator) return ''
+
+  return `${collaborator.name} ${collaborator.surname}`
 }
 
 // Gantt layout and helpers
@@ -428,7 +460,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
   const start = startOfDay(new Date(item.starts_at))
   const end = startOfDay(new Date(item.ends_at))
   const offset = Math.max(0, Math.round((start.getTime() - timelineStart.value.getTime()) / dayMs))
-  const duration = item.item_type === 'milestone' ? 1 : Math.max(1, Math.round((end.getTime() - start.getTime() / dayMs) + 1))
+  const duration = item.item_type === 'milestone' ? 1 : Math.max(1, Math.round((end.getTime() - start.getTime()) / dayMs + 1))
 
   return {
     gridColumn: `${offset + 2} / span ${duration}`,
@@ -483,6 +515,13 @@ watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
       <div class="grid gap-4">
         <input v-model="timelineForm.owner" type="text" class="app-input" placeholder="Owner" :disabled="timelineCreating" />
 
+        <select v-model="timelineForm.assigned_user_id" class="app-input" :disabled="timelineCreating">
+          <option value="">Unassigned</option>
+          <option v-for="collaborator in collaborators" :key="collaborator.user_id" :value="collaborator.user_id">
+            {{ collaborator.name }} {{ collaborator.surname }} - {{ collaborator.role }}
+          </option>
+        </select>
+
         <!-- TODO: make into a color picker; no time for now -->
         <input v-model="timelineForm.color" type="text" class="app-input" :disabled="timelineCreating" />
 
@@ -516,7 +555,9 @@ watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
             <div class="sticky left-0 z-20 h-full px-3 py-3">
               <p class="text-sm font-semibold">{{ item.title }}</p>
               <p class="mt-1 text-xs text-(--color-text-muted)">
-                {{ item.item_type }} <span v-if="item.owner"> / {{ item.owner }}</span>
+                {{ item.item_type }}
+                <span v-if="item.owner"> / {{ item.owner }}</span>
+                <span v-if="item.assigned_user_id"> / assigned to {{ collaboratorName(item.assigned_user_id) }}</span>
               </p>
             </div>
 
@@ -547,6 +588,14 @@ watch(eventId, () => {void loadTimelineItems()}, {immediate: true})
                 </select>
 
                 <input v-model="timelineEditForm.owner" type="text" class="app-input" placeholder="Owner" :disabled="updatingTimelineItemId === item.id" />
+
+                <select v-model="timelineEditForm.assigned_user_id" class="app-input" :disabled="updatingTimelineItemId === item.id">
+                  <option value="">Unassigned</option>
+                  <option v-for="collaborator in collaborators" :key="collaborator.user_id" :value="collaborator.user_id">
+                    {{ collaborator.name }} {{ collaborator.surname }} - {{ collaborator.role }}
+                  </option>
+                </select>
+
                 <input v-model="timelineEditForm.color" type="text" class="app-input" placeholder="#38bdf8" :disabled="updatingTimelineItemId === item.id" />
                 <textarea v-model="timelineEditForm.notes" class="app-input md:col-span-2" :disabled="updatingTimelineItemId === item.id" />
 

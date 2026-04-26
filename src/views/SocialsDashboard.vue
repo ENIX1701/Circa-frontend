@@ -263,7 +263,7 @@ watch(
 
             <div class="flex items-center gap-3">
               <label class="text-sm text-(--color-text-muted)">Status</label>
-              <select class="app-input max-w-40" :disabled="updatingPostId === post.id" @change="handleStatusChange(post, ($event.target as HTMLSelectElement).value as SocialPostRecord['status'])">
+              <select class="app-input max-w-40" :disabled="updatingPostId === post.id" :value="post.status" @change="handleStatusChange(post, ($event.target as HTMLSelectElement).value as SocialPostRecord['status'])">
                 <option value="draft">draft</option>
                 <option value="ready">ready</option>
                 <option value="posted">posted</option>

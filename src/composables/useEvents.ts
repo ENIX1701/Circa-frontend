@@ -146,6 +146,7 @@ export interface PlannerTimelineItemRecord {
   notes: string
   color: string
   depends_on_item_id: string
+  assigned_user_id: string
   position: number
   created_at: string
   updated_at: string
@@ -161,6 +162,7 @@ export interface CreatePlannerTimelineItemRequest {
   notes?: string
   color?: string
   depends_on_item_id?: string
+  assigned_user_id?: string
 }
 
 export interface UpdatePlannerTimelineItemRequest {
@@ -173,6 +175,7 @@ export interface UpdatePlannerTimelineItemRequest {
   notes?: string
   color?: string
   depends_on_item_id?: string
+  assigned_user_id?: string
   position?: number
 }
 
@@ -611,7 +614,7 @@ export const useEvents = () => {
     const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
     if (cached) {
       setCached(collaboratorsPath(eventId), [
-        cached.map((item) => item.user_id !== collaborator.user_id ? collaborator : item)
+        cached.map((item) => item.user_id === collaborator.user_id ? collaborator : item)
       ])
     }
 
@@ -620,13 +623,11 @@ export const useEvents = () => {
   }
 
   async function deleteEventCollaborator(eventId: string, userId: string): Promise<void> {
-    const collaborator = await requestJson<EventCollaboratorRecord>(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, { method: 'DELETE' })
+    await requestNoContent(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, { method: 'DELETE' })
 
     const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
     if (cached) {
-      setCached(collaboratorsPath(eventId), [
-        cached.filter((item) => item.user_id !== userId)
-      ])
+      setCached(collaboratorsPath(eventId), cached.filter((item) => item.user_id !== userId))
     }
 
     invalidateCached(eventExportPath(eventId))

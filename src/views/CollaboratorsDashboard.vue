@@ -171,7 +171,7 @@ watch(eventId, () => {void loadCollaborators()}, {immediate: true})
                         </select>
 
                         <button v-if="isOwner" type="button" class="text-xs text-(--color-text-muted)" :disabled="deletingUserId === member.user_id" @click="handleRemoveCollaborator(member)">
-                            {{ creating ? 'Removing...' : 'Remove' }}
+                            {{ deletingUserId === member.user_id ? 'Removing...' : 'Remove' }}
                         </button>
                     </div>
                 </article>
