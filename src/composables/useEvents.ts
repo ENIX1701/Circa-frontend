@@ -18,6 +18,25 @@ export interface EventRecord {
   updated_at: string
 }
 
+export interface EventCollaboratorRecord {
+  user_id: string
+  name: string
+  surname: string
+  email: string
+  phone: string
+  role: EventMembershipRole
+  created_at: string
+}
+
+export interface AddEventCollaboratorRequest {
+  email: string
+  role: EventMembershipRole
+}
+
+export interface UpdateEventCollaboratorRequest {
+  role: EventMembershipRole
+}
+
 export interface CreateEventRequest {
   name: string
   slug: string
@@ -212,6 +231,10 @@ const inFlightRequests = new Map<string, Promise<unknown>>()
 
 function eventPath(id: string) {
   return `/api/events/${encodeURIComponent(id)}`
+}
+
+function collaboratorsPath(eventId: string) {
+  return `/api/events/${encodeURIComponent(eventId)}/collaborators`
 }
 
 function plannerItemsPath(eventId: string) {
@@ -564,6 +587,51 @@ export const useEvents = () => {
     return cachedRequestJson<EventExportRecord>(eventExportPath(id))
   }
 
+  async function listEventCollaborators(eventId: string): Promise<EventCollaboratorRecord[]> {
+    return cachedRequestJson<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
+  }
+
+  async function addEventCollaborator(eventId: string, payload: AddEventCollaboratorRequest): Promise<EventCollaboratorRecord> {
+    const collaborator = await requestJson<EventCollaboratorRecord>(collaboratorsPath(eventId), { method: 'POST', body: JSON.stringify(payload) })
+
+    const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
+    if (cached) {
+      setCached(collaboratorsPath(eventId), [
+        ...cached.filter((item) => item.user_id !== collaborator.user_id), collaborator
+      ])
+    }
+
+    invalidateCached(eventExportPath(eventId))
+    return collaborator
+  }
+
+  async function updateEventCollaborator(eventId: string, userId: string, payload: UpdateEventCollaboratorRequest): Promise<EventCollaboratorRecord> {
+    const collaborator = await requestJson<EventCollaboratorRecord>(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, { method: 'PATCH', body: JSON.stringify(payload) })
+
+    const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
+    if (cached) {
+      setCached(collaboratorsPath(eventId), [
+        cached.map((item) => item.user_id !== collaborator.user_id ? collaborator : item)
+      ])
+    }
+
+    invalidateCached(eventExportPath(eventId))
+    return collaborator
+  }
+
+  async function deleteEventCollaborator(eventId: string, userId: string): Promise<void> {
+    const collaborator = await requestJson<EventCollaboratorRecord>(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, { method: 'DELETE' })
+
+    const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
+    if (cached) {
+      setCached(collaboratorsPath(eventId), [
+        cached.filter((item) => item.user_id !== userId)
+      ])
+    }
+
+    invalidateCached(eventExportPath(eventId))
+  }
+
   return {
     listEvents,
     getEvent,
@@ -589,5 +657,9 @@ export const useEvents = () => {
     updatePlannerTimelineItem,
     deletePlannerTimelineItem,
     clearEventsCache,
+    listEventCollaborators,
+    addEventCollaborator,
+    updateEventCollaborator,
+    deleteEventCollaborator,
   }
 }

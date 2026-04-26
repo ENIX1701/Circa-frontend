@@ -4,6 +4,7 @@ import {
   LayoutGrid,
   MessageCircleDashed,
   Palette,
+  Users,
 } from 'lucide-vue-next'
 import type { Component } from 'vue'
 import { Role } from '@/enums/Role'
@@ -63,5 +64,12 @@ export const eventSections: EventSection[] = [
     suffix: '/socials',
     icon: MessageCircleDashed,
     component: () => import('@/views/SocialsDashboard.vue'),
+  },
+  {
+    key: 'collaborators',
+    title: 'Collaborators',
+    suffix: '/collaborators',
+    icon: Users,
+    component: () => import('@/views/CollaboratorsDashboard.vue'),
   },
 ]
