@@ -6,10 +6,15 @@ type ThemeMode = EventBrandingRecord['theme_mode']
 
 const DEFAULT_THEME = {
   mode: 'dark' as ThemeMode,
-  bg: '#0f0f12',
-  bgDeep: '#050505',
+  bg: '#111111',
+  bgDeep: '#0b0b0b',
   primary: '#8b5cf6',
-  secondary: '#00f3ff',
+  secondary: '#f97316',
+  surface: '#181818',
+  surfaceStrong: '#202020',
+  border: '#343434',
+  text: '#f5f5f5',
+  textMuted: '#a8a29e',
 }
 
 function normalizeHex(value: string | undefined | null, fallback: string) {
@@ -22,8 +27,8 @@ function normalizeHex(value: string | undefined | null, fallback: string) {
   return /^#[0-9a-fA-F]{6}$/.test(withHash) ? withHash : fallback
 }
 
-function hexToRgb(hex: string) {
-  const normalized = normalizeHex(hex, DEFAULT_THEME.bg).replace('#', '')
+function hexToRgb(hex: string, fallback: string) {
+  const normalized = normalizeHex(hex, fallback).replace('#', '')
   const value = Number.parseInt(normalized, 16)
 
   return {
@@ -33,9 +38,9 @@ function hexToRgb(hex: string) {
   }
 }
 
-function setColorVar(name: string, value: string) {
-  const color = normalizeHex(value, DEFAULT_THEME.bg)
-  const rgb = hexToRgb(color)
+function setColorVar(name: string, value: string, fallback = DEFAULT_THEME.primary) {
+  const color = normalizeHex(value, fallback)
+  const rgb = hexToRgb(color, fallback)
   const root = document.documentElement
 
   root.style.setProperty(`--color-${name}`, color)
@@ -49,6 +54,7 @@ function applyModeVars(mode: ThemeMode) {
   root.dataset.theme = mode
 
   if (mode === 'light') {
+    root.style.setProperty('--color-bg', '#f7f4ef')
     root.style.setProperty('--color-bg-deep', '#f8fafc')
     root.style.setProperty('--color-surface', 'rgba(255, 255, 255, 0.7)')
     root.style.setProperty('--color-surface-strong', 'rgba(255, 255, 255, 0.9)')
@@ -58,29 +64,28 @@ function applyModeVars(mode: ThemeMode) {
     return
   }
 
+  root.style.setProperty('--color-bg', DEFAULT_THEME.bg)
   root.style.setProperty('--color-bg-deep', DEFAULT_THEME.bgDeep)
-  root.style.setProperty('--color-surface', 'rgba(255, 255, 255, 0.05)')
-  root.style.setProperty('--color-surface-strong', 'rgba(255, 255, 255, 0.1)')
-  root.style.setProperty('--color-surface-border', 'rgba(255, 255, 255, 0.1)')
-  root.style.setProperty('--color-text', 'rgba(255, 255, 255, 1)')
-  root.style.setProperty('--color-text-muted', 'rgba(255, 255, 255, 0.7)')
+  root.style.setProperty('--color-surface', DEFAULT_THEME.surface)
+  root.style.setProperty('--color-surface-strong', DEFAULT_THEME.surfaceStrong)
+  root.style.setProperty('--color-surface-border', DEFAULT_THEME.border)
+  root.style.setProperty('--color-text', DEFAULT_THEME.text)
+  root.style.setProperty('--color-text-muted', DEFAULT_THEME.textMuted)
 }
 
 function applyTheme(branding: EventBrandingRecord) {
   const mode = branding.theme_mode === 'light' ? 'light' : 'dark'
 
-  setColorVar('bg', normalizeHex(branding.background_color, DEFAULT_THEME.bg))
-  setColorVar('primary', normalizeHex(branding.primary_color, DEFAULT_THEME.primary))
-  setColorVar('secondary', normalizeHex(branding.secondary_color, DEFAULT_THEME.secondary))
   applyModeVars(mode)
+  setColorVar('primary', branding.primary_color, DEFAULT_THEME.primary)
+  setColorVar('secondary', branding.secondary_color, DEFAULT_THEME.secondary)
 }
 
 function resetTheme() {
-  setColorVar('bg', DEFAULT_THEME.bg)
-  setColorVar('primary', DEFAULT_THEME.primary)
-  setColorVar('secondary', DEFAULT_THEME.secondary)
-
   applyModeVars(DEFAULT_THEME.mode)
+
+  setColorVar('primary', DEFAULT_THEME.primary, DEFAULT_THEME.primary)
+  setColorVar('secondary', DEFAULT_THEME.secondary, DEFAULT_THEME.secondary)
 }
 
 export function useEventTheme() {

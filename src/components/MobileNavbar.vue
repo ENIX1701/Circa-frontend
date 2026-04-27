@@ -13,7 +13,7 @@ interface NavItem {
 
 const route = useRoute()
 
-const eventId = computed(() => typeof route.params.id === 'string' ? route.params.id : '')
+const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
 
 const inEventWorkspace = computed(() => eventId.value.length > 0)
 
@@ -27,7 +27,7 @@ const navItems = computed<NavItem[]>(() => {
       exact: true,
     }))
   }
-  
+
   return eventSections.map((section) => ({
     key: section.key,
     title: section.title,
@@ -36,8 +36,6 @@ const navItems = computed<NavItem[]>(() => {
     exact: section.suffix === '',
   }))
 })
-
-const gridClass = computed(() => navItems.value.length === 1 ? 'grid-cols-1' : 'grid-cols-4')
 
 function isActive(item: NavItem) {
   if (item.exact) {
@@ -49,16 +47,23 @@ function isActive(item: NavItem) {
 </script>
 
 <template>
-  <nav class="fixed inset-x-0 bottom-0 z-40 bg-[rgba(10,10,20,0.9)] px-2 py-2 backdrop-blur-xl xl:hidden">
-    <div class="grid gap-2" :class="gridClass">
+  <nav
+    class="fixed inset-x-0 bottom-0 z-40 border-t border-(--app-border) bg-(--app-surface) px-2 pb-[calc(0.5rem+env(safe-area-inset-bottom))] pt-2 xl:hidden"
+  >
+    <div class="grid auto-cols-fr grid-flow-col gap-1 overflow-x-auto">
       <RouterLink
         v-for="item in navItems"
         :key="item.key"
         :to="item.to"
-        class="flex min-h-16 flex-col items-center justify-center gap-1 rounded-2xl px-2 py-2 text-center transition"
+        class="flex min-w-20 flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center text-xs font-semibold"
+        :class="
+          isActive(item)
+            ? 'border-(--app-accent) bg-(--app-bg-subtle) text-(--app-text)'
+            : 'border-transparent text-(--app-text-muted)'
+        "
       >
         <component :is="item.icon" class="h-5 w-5 shrink-0" />
-        <span class="font-medium leading-none">{{ item.title }}</span>
+        <span class="leading-none">{{ item.title }}</span>
       </RouterLink>
     </div>
   </nav>

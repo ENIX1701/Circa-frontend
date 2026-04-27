@@ -13,7 +13,7 @@ interface NavItem {
 
 const route = useRoute()
 
-const eventId = computed(() => typeof route.params.id === 'string' ? route.params.id : '')
+const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
 
 const inEventWorkspace = computed(() => eventId.value.length > 0)
 
@@ -27,7 +27,7 @@ const navItems = computed<NavItem[]>(() => {
       exact: true,
     }))
   }
-  
+
   return eventSections.map((section) => ({
     key: section.key,
     title: section.title,
@@ -46,44 +46,37 @@ function isActive(item: NavItem) {
 }
 </script>
 
-<!-- redesign because I said so... -->
 <template>
-  <!-- since this should be done properly -->
-   <!-- I'll have to stick to the big-boy html tags... -->
-  <aside class="hidden w-72 shrink-0 xl:flex">
-    <div class="sticky top-0 flex h-screen w-full flex-col bg-[rgba(10,10,20,0.8)] px-5 py-6 backdrop-blur-xl">
-      <RouterLink to="/events" class="block rounded-2xl bg-white/5 px-4 py-4">
+  <aside class="sticky top-0 h-screen w-72 border-r border-(--app-border) bg-(--app-surface)">
+    <div class="flex h-full flex-col px-5 py-6">
+      <RouterLink to="/events" class="block border-b border-(--app-border) pb-5">
         <p class="section-label">Circa</p>
-        <h1 class="mt-2 text-xl font-semibold tracking-tight">Event workspace</h1>
-        <p class="mt-2 text-sm text-(--color-text-muted)">
-          event name here maybe??
-        </p>
+        <h1 class="mt-2 text-xl font-bold tracking-tight text-(--app-text)">Event workspace</h1>
+        <p class="mt-2 text-sm text-(--app-text-muted)">event name here maybe??</p>
       </RouterLink>
       <div class="mt-8">
-        <p class="section-label">
-          Navigation
-        </p>
+        <p class="section-label">Navigation</p>
+
+        <nav class="mt-4 space-y-1">
+          <RouterLink
+            v-for="item in navItems"
+            :key="item.key"
+            :to="item.to"
+            class="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-semibold"
+            :class="
+              isActive(item)
+                ? 'border-(--app-accent) bg-(--app-bg-subtle) text-(--app-text)'
+                : 'border-transparent text-(--app-text-muted)'
+            "
+          >
+            <component :is="item.icon" class="h-4 w-4 shrink-0" />
+            <span>{{ item.title }}</span>
+          </RouterLink>
+        </nav>
       </div>
-
-      <nav class="mt-4 space-y-2">
-        <RouterLink
-        v-for="item in navItems"
-        :key="item.key"
-        :to="item.to"
-        class="flex items-center gap-4 rounded-2xl px-4 py-3 text-sm font-medium transition"
-        :class="isActive(item) ? 'border border-white/15 bg-white/10 text-white' : 'border border-transparent text-(--color-text-muted)'"
-        >
-          <component :is="item.icon" class="h-4 w-4 shrink-0" />
-          <span>{{ item.title }}</span>
-        </RouterLink>
-      </nav>
-
-      <div
-        v-if="inEventWorkspace"
-        class="mt-auto rounded-2xl border border-whtie/10 bg-white/5 px-4 py-4"
-      >
+      <div v-if="inEventWorkspace" class="mt-auto border-t border-(--app-border) pt-5">
         <p class="section-label">Current event</p>
-        <p class="mt-2 break-all text-sm font-medium text-white">{{  eventId }}</p>
+        <p class="mt-2 break-all font-mono text-xs text-(--app-text-muted)">{{ eventId }}</p>
       </div>
     </div>
   </aside>
