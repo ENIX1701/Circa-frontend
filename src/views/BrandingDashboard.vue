@@ -116,7 +116,7 @@ watch(
 
 <template>
   <div class="space-y-8">
-    <AppPageHeader eyebrow="Branding" title="branding" description="Give this even a soul!" />
+    <AppPageHeader eyebrow="branding" title="Branding" description="Give this event a soul!" />
 
     <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
     <AppAlert v-if="saved" tone="success">Branding saved :3</AppAlert>
