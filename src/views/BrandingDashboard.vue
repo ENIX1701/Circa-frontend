@@ -1,8 +1,17 @@
 <script setup lang="ts">
-import { useEvents, type EventBrandingRecord } from '@/composables/useEvents'
+import {
+  useEvents,
+  type EventBrandingRecord,
+  type UpsertEventBrandingRequest,
+} from '@/composables/useEvents'
 import { ref, computed, reactive, watch } from 'vue'
 import { useRoute } from 'vue-router'
-import ColorPicker from '@/components/ColorPicker.vue'
+import AppPageHeader from '@/components/ui/AppPageHeader.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
+import AppPanel from '@/components/ui/AppPanel.vue'
+import BrandingForm from '@/components/branding/BrandingForm.vue'
+import BrandingPreview from '@/components/branding/BrandingPreview.vue'
+import TypographyPreview from '@/components/branding/TypographyPreview.vue'
 
 const route = useRoute()
 const { getEventBranding, upsertEventBranding } = useEvents()
@@ -14,13 +23,13 @@ const saving = ref(false)
 const error = ref('')
 const saved = ref(false)
 
-const form = reactive({
+const form = reactive<UpsertEventBrandingRequest>({
   event_name_override: '',
   tagline: '',
   primary_color: '#8b5cf6',
-  secondary_color: '#521bca',
-  theme_mode: 'dark' as EventBrandingRecord['theme_mode'],
-  background_color: '#0f0f12',
+  secondary_color: '#f97316',
+  theme_mode: 'dark',
+  background_color: '#111111',
   notes: '',
 })
 
@@ -28,10 +37,14 @@ function applyBranding(branding: EventBrandingRecord) {
   form.event_name_override = branding.event_name_override
   form.tagline = branding.tagline
   form.primary_color = branding.primary_color?.trim() || '#8b5cf6'
-  form.secondary_color = branding.secondary_color?.trim() || '#521bca'
+  form.secondary_color = branding.secondary_color?.trim() || '#f97316'
   form.theme_mode = branding.theme_mode || 'dark'
-  form.background_color = branding.background_color?.trim() || '#0f0f12'
+  form.background_color = branding.background_color?.trim() || '#111111'
   form.notes = branding.notes
+}
+
+function updateForm(nextForm: UpsertEventBrandingRequest) {
+  Object.assign(form, nextForm)
 }
 
 async function loadBranding() {
@@ -77,12 +90,14 @@ async function handleSave() {
     applyBranding(branding)
     saved.value = true
 
-    window.dispatchEvent(new CustomEvent('circa:branding-updated', {
-      detail: {
-        eventId: eventId.value,
-        branding,
-      }
-    }))
+    window.dispatchEvent(
+      new CustomEvent('circa:branding-updated', {
+        detail: {
+          eventId: eventId.value,
+          branding,
+        },
+      }),
+    )
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to save branding :c'
   } finally {
@@ -100,89 +115,33 @@ watch(
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <p class="section-label">Branding</p>
-      <h1 class="text-3xl font-bold tracking-tight">Event branding</h1>
+  <div class="space-y-8">
+    <AppPageHeader eyebrow="Branding" title="branding" description="Give this even a soul!" />
+
+    <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
+    <AppAlert v-if="saved" tone="success">Branding saved :3</AppAlert>
+
+    <AppPanel v-if="loading">
+      <p class="text-sm text-(--app-text-muted)">Loading branding...</p>
+    </AppPanel>
+
+    <div v-else class="grid gap-8 lg:grid-cols-2">
+      <AppPanel>
+        <BrandingForm :form="form" :saving="saving" @update:form="updateForm" @save="handleSave" />
+      </AppPanel>
+
+      <div class="space-y-8">
+        <TypographyPreview />
+
+        <BrandingPreview
+          :event-name="form.event_name_override"
+          :tagline="form.tagline"
+          :primary-color="form.primary_color"
+          :secondary-color="form.secondary_color"
+          :background-color="form.background_color"
+          :theme-mode="form.theme_mode"
+        />
+      </div>
     </div>
-
-    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
-
-    <div v-if="saved" class="app-alert app-alert--success">Branding saved :3</div>
-
-    <div v-if="loading" class="glass-panel p-6">
-      <p class="text-sm text-(--color-text-muted)">Loading branding...</p>
-    </div>
-
-    <form v-else class="glass-panel p-6 space-y-4" @submit.prevent="handleSave">
-      <div class="space-y-2">
-        <label for="event-name-override" class="block text-sm font-medium text-(--color-text-muted)"
-          >Event name override</label
-        >
-        <input
-          id="event-name-override"
-          v-model="form.event_name_override"
-          type="text"
-          class="app-input"
-          placeholder="The coolest event on Earth!!!"
-        />
-      </div>
-
-      <div class="space-y-2">
-        <label for="branding-tagline" class="block text-sm font-medium text-(--color-text-muted)"
-          >Tagline</label
-        >
-        <input
-          id="branding-tagline"
-          v-model="form.tagline"
-          type="text"
-          class="app-input"
-          placeholder="We make things. They usually work."
-        />
-      </div>
-      
-      <div class="grid gap-4 md:grid-cols-2">
-        <ColorPicker title="primary" v-model:color="form.primary_color"/>
-        <ColorPicker title="secondary" v-model:color="form.secondary_color"/>
-      </div>
-
-      <div class="grid gap-4 md:grid-cols-2">
-        <div class="space-y-2">
-          <label for="theme-mode" class="block text-sm font-medium text-(--color-text-muted)">Theme mode</label>
-          <select id="theme-mode" v-model="form.theme_mode" class="app-input">
-            <option value="dark">dark</option>
-            <option value="light">light</option>
-          </select>
-        </div>
-
-        <ColorPicker title="background" v-model:color="form.background_color" />
-      </div>
-
-      <div class="space-y-2">
-        <label for="branding-notes" class="block text-sm font-medium text-(--color-text-muted)"
-          >Notes</label
-        >
-        <textarea
-          id="branding-notes"
-          v-model="form.notes"
-          class="app-input min-h-32 resize-none"
-          placeholder="The no fluff description of what's about to get done >:3c"
-        />
-      </div>
-
-      <button type="submit" class="app-button-primary" :disabled="saving">
-        {{ saving ? 'Saving...' : 'Save branding' }}
-      </button>
-    </form>
-
-    <section class="glass-panel p-6">
-      <p class="section-label">Preview</p>
-
-      <div class="mt-4 rounded-2xl border border-white/10 p-5" :style="{background: `linear-gradient(135deg, ${form.background_color},  ${ form.primary_color || '#8b5cf6'}, ${form.secondary_color || '#521bca'})`}">
-        <p class="text-xs uppercase text-white">Event preview</p>
-        <h2 class="mt-3 text-2xl font-bold text-white">{{ form.event_name_override || 'Event name' }}</h2>
-        <p class="mt-2 text-sm text-white">{{ form.tagline || 'Tagline goes here' }}</p>
-      </div>
-    </section>
   </div>
 </template>
