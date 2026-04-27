@@ -1,4 +1,11 @@
 <script setup lang="ts">
+import TeamMemberCard from '@/components/staff/TeamMemberCard.vue'
+import UnassignedWorkList from '@/components/staff/UnassignedWorkList.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
+import AppEmptyState from '@/components/ui/AppEmptyState.vue'
+import AppPageHeader from '@/components/ui/AppPageHeader.vue'
+import AppPanel from '@/components/ui/AppPanel.vue'
+import AppStatCard from '@/components/ui/AppStatCard.vue'
 import {
   useEvents,
   type EventCollaboratorRecord,
@@ -67,17 +74,6 @@ async function loadStaff() {
   }
 }
 
-function formatWindow(item: PlannerTimelineItemRecord) {
-  const formatter = new Intl.DateTimeFormat(undefined, {
-    month: 'short',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
-
-  return `${formatter.format(new Date(item.starts_at))} -> ${formatter.format(new Date(item.ends_at))}`
-}
-
 watch(
   eventId,
   () => {
@@ -88,111 +84,33 @@ watch(
 </script>
 
 <template>
-  <div class="space-y-6">
-    <div>
-      <p class="section-label">Staff</p>
-      <h1 class="text-3xl font-bold tracking-tight">Team</h1>
-      <p class="mt-2 text-sm text-(--color-text-muted)">
-        Who owns what, what's blocked and what still needs a person! :3
-      </p>
-    </div>
+  <div class="space-y-8">
+    <AppPageHeader eyebrow="Staff" title="Team" description="Who owns what, what's blocked, and what still needs a person! :3" />
 
-    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
+    <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
 
     <!-- I really want to make this part a fancy data-dense dashbaord, but we'll see how useful it is xC -->
     <div class="grid gap-4 md:grid-cols-3">
-      <section class="glass-panel p-5">
-        <p class="section-label">Team</p>
-        <p class="mt-2 text-3xl font-semibold">{{ collaborators.length }}</p>
-      </section>
-
-      <section class="glass-panel p-5">
-        <p class="section-label">Assigned</p>
-        <p class="mt-2 text-3xl font-semibold">{{ assignedItems.length }}</p>
-      </section>
-
-      <section class="glass-panel p-5">
-        <p class="section-label">Blocked</p>
-        <p class="mt-2 text-3xl font-semibold">{{ blockedItems.length }}</p>
-      </section>
+      <AppStatCard label="Team" :value="collaborators.length" ></AppStatCard>
+      <AppStatCard label="Assigned" :value="assignedItems.length" ></AppStatCard>
+      <AppStatCard label="Blocked" :value="blockedItems.length" ></AppStatCard>
     </div>
 
-    <!-- assigned -->
-    <section class="glass-panel glass-panel--strong p-6">
-      <div class="grid gap-4 lg:grid-cols-2">
-        <article
-          v-for="card in teamCards"
-          :key="card.member.user_id"
-          class="rounded-2xl border border-white/10 bg-white/5 p-5"
-        >
-          <div class="flex items-start justify-between gap-4">
-            <div>
-              <h2 class="font-semibold">{{ card.member.name }} {{ card.member.surname }}</h2>
-              <p class="mt-1 text-sm text-(--color-text-muted)">{{ card.member.role }}</p>
-              <p class="mt-1 text-xs text-(--color-text-muted)">{{ card.member.email }}</p>
-              <p v-if="card.member.phone" class="mt-1 text-xs text-(--color-text-muted)">
-                {{ card.member.phone }}
-              </p>
-            </div>
-
-            <div class="text-right text-xs text-(--color-text-muted)">
-              <p>{{ card.open }} open</p>
-              <p>{{ card.done }} done</p>
-              <p v-if="card.blocked" class="text-red-300">{{ card.blocked }} blocked</p>
-            </div>
-          </div>
-
-          <div v-if="card.assignments.length" class="mt-5 space-y-3">
-            <div
-              v-for="item in card.assignments"
-              :key="item.id"
-              class="rounded-xl border border-white/10 bg-black/10 p-3"
-            >
-              <div class="flex items-start justify-between gap-3">
-                <div>
-                  <p class="text-sm font-medium">{{ item.title }}</p>
-                  <p class="mt-1 text-xs text-(--color-text-muted)">{{ formatWindow(item) }}</p>
-                </div>
-
-                <span
-                  class="rounded-full border border-white/10 px-2 py-1 text-xs text-(--color-text-muted)"
-                  >{{ item.status }}</span
-                >
-              </div>
-
-              <p v-if="item.notes" class="mt-2 text-xs text-(--color-text-muted)">
-                {{ item.notes }}
-              </p>
-            </div>
-          </div>
-
-          <p v-else class="mt-5 text-sm text-(--color-text-muted)">
-            No assigned timeline work yet :c
-          </p>
-        </article>
-      </div>
-    </section>
-
-    <!-- unassigned -->
-    <section class="glass-panel p-6">
-      <p class="section-label">Unassigned work >:c</p>
-
-      <div v-if="unassignedItems.length === 0" class="mt-4 text-sm text-(--color-text-muted)">
-        Everything has an owner. Interesting...
+    <AppPanel tone='muted' class="space-y-6">
+      <div>
+        <p class="section-label">Assignments</p>
+        <h2 class="mt-2 text-2xl font-black text-(--app-text)">Team workload</h2>
       </div>
 
-      <div v-else class="mt-4 space-y-3">
-        <article
-          v-for="item in unassignedItems"
-          :key="item.id"
-          class="rounded-xl border border-white/10 bg-white/5 p-4"
-        >
-          <p class="text-sm font-semibold">{{ item.title }}</p>
-          <p class="mt-1 text-xs text-(--color-text-muted)">
-            {{ item.item_type }} / {{ item.status }} / {{ formatWindow(item) }}
-          </p>
-        </article>
+      <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading staff...</div>
+
+      <AppEmptyState v-else-if="teamCards.length === 0" title="No collaborators yet" description="Add people in the Collaborators tab first :3" />
+
+      <div v-else class="grid gap-4 lg:grid-cols-2">
+        <TeamMemberCard v-for="card in teamCards" :key="card.member.user_id" :member="card.member" :assignments="card.assignments" :done="card.done" :blocked="card.blocked" :open="card.open" />
       </div>
-    </section>
+    </AppPanel>
+
+    <UnassignedWorkList :items="unassignedItems" />
   </div>
 </template>
