@@ -111,9 +111,7 @@ describe('useNavigation', () => {
 
     const { sections } = useNavigation()
     // Staff has access to: logistics (admin/organizer/staff), planner (no restriction)
-    const expected = appSections.filter(
-      (s) => !s.roles || s.roles.includes(Role.Staff),
-    )
+    const expected = appSections.filter((s) => !s.roles || s.roles.includes(Role.Staff))
     expect(sections.value.length).toBe(expected.length)
   })
 
@@ -125,9 +123,7 @@ describe('useNavigation', () => {
 
     const { sections } = useNavigation()
 
-    const unrestricted = appSections.filter(
-      (s) => !s.roles || s.roles.includes(Role.Volunteer),
-    )
+    const unrestricted = appSections.filter((s) => !s.roles || s.roles.includes(Role.Volunteer))
     expect(sections.value.length).toBe(unrestricted.length)
   })
 

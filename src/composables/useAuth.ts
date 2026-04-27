@@ -55,7 +55,7 @@ export const useAuth = () => {
   const router = useRouter()
 
   const claims = computed(() => {
-    tokenVersion.value // should suffice to notify/trigger the ref
+    void tokenVersion.value // should suffice to notify/trigger the ref
     return parseToken()
   })
   const role = computed(() => (claims.value?.role as Role) ?? null)

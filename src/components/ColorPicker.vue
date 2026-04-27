@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import {computed} from 'vue'
+import { computed } from 'vue'
 
 const props = defineProps<{
   title: string
@@ -10,9 +10,9 @@ const emit = defineEmits<{
   'update:color': [value: string]
 }>()
 
-const rawColor = computed(() => props.color?.trim() ?? '')
-
-const pickerColor = computed(() => /^#[0-9a-fA-F]{6}$/.test(props.color) ? props.color : '#000000',)
+const pickerColor = computed(() =>
+  /^#[0-9a-fA-F]{6}$/.test(props.color) ? props.color : '#000000',
+)
 
 const handlePickerInput = (event: Event) => {
   emit('update:color', (event.target as HTMLInputElement).value.toLowerCase())

@@ -85,18 +85,22 @@ watch(
 
 <template>
   <div class="space-y-8">
-    <AppPageHeader eyebrow="Staff" title="Team" description="Who owns what, what's blocked, and what still needs a person! :3" />
+    <AppPageHeader
+      eyebrow="Staff"
+      title="Team"
+      description="Who owns what, what's blocked, and what still needs a person! :3"
+    />
 
     <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
 
     <!-- I really want to make this part a fancy data-dense dashbaord, but we'll see how useful it is xC -->
     <div class="grid gap-4 md:grid-cols-3">
-      <AppStatCard label="Team" :value="collaborators.length" ></AppStatCard>
-      <AppStatCard label="Assigned" :value="assignedItems.length" ></AppStatCard>
-      <AppStatCard label="Blocked" :value="blockedItems.length" ></AppStatCard>
+      <AppStatCard label="Team" :value="collaborators.length"></AppStatCard>
+      <AppStatCard label="Assigned" :value="assignedItems.length"></AppStatCard>
+      <AppStatCard label="Blocked" :value="blockedItems.length"></AppStatCard>
     </div>
 
-    <AppPanel tone='muted' class="space-y-6">
+    <AppPanel tone="muted" class="space-y-6">
       <div>
         <p class="section-label">Assignments</p>
         <h2 class="mt-2 text-2xl font-black text-(--app-text)">Team workload</h2>
@@ -104,10 +108,22 @@ watch(
 
       <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading staff...</div>
 
-      <AppEmptyState v-else-if="teamCards.length === 0" title="No collaborators yet" description="Add people in the Collaborators tab first :3" />
+      <AppEmptyState
+        v-else-if="teamCards.length === 0"
+        title="No collaborators yet"
+        description="Add people in the Collaborators tab first :3"
+      />
 
       <div v-else class="grid gap-4 lg:grid-cols-2">
-        <TeamMemberCard v-for="card in teamCards" :key="card.member.user_id" :member="card.member" :assignments="card.assignments" :done="card.done" :blocked="card.blocked" :open="card.open" />
+        <TeamMemberCard
+          v-for="card in teamCards"
+          :key="card.member.user_id"
+          :member="card.member"
+          :assignments="card.assignments"
+          :done="card.done"
+          :blocked="card.blocked"
+          :open="card.open"
+        />
       </div>
     </AppPanel>
 

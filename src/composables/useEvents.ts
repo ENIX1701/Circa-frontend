@@ -71,7 +71,7 @@ export interface UpdatePlannerItemRequest {
 }
 
 export interface EventBrandingRecord {
-  id: string | null,
+  id: string | null
   event_id: string
   event_name_override: string
   tagline: string
@@ -261,15 +261,17 @@ function eventExportPath(eventId: string) {
 }
 
 function getCached<T>(path: string): T | undefined {
-  return memoryCache.get(path) as T | undefined 
+  return memoryCache.get(path) as T | undefined
 }
 
 function setCached<T>(path: string, value: T) {
   memoryCache.set(path, value)
 
-  window.dispatchEvent(new CustomEvent('circa:cache-updated', {
-    detail: { path, value },
-  }))
+  window.dispatchEvent(
+    new CustomEvent('circa:cache-updated', {
+      detail: { path, value },
+    }),
+  )
 }
 
 function invalidateCached(path: string) {
@@ -285,10 +287,16 @@ function upsertCachedItem<T extends { id: string }>(path: string, item: T) {
 
   if (!cached) return
 
-  setCached(path, cached.map((current) => current.id === item.id ? item : current))
+  setCached(
+    path,
+    cached.map((current) => (current.id === item.id ? item : current)),
+  )
 }
 
-function upsertCachedPositionedItem<T extends { id: string, position: number }>(path: string, item: T) {
+function upsertCachedPositionedItem<T extends { id: string; position: number }>(
+  path: string,
+  item: T,
+) {
   const cached = getCached<T[]>(path)
 
   if (!cached) return
@@ -301,8 +309,11 @@ function removeCachedItem<T extends { id: string }>(path: string, itemId: string
   const cached = getCached<T[]>(path)
 
   if (!cached) return
-  
-  setCached(path, cached.filter((item) => item.id !== itemId))
+
+  setCached(
+    path,
+    cached.filter((item) => item.id !== itemId),
+  )
 }
 
 function cacheEvent(event: EventRecord) {
@@ -315,10 +326,14 @@ async function cachedRequestJson<T>(path: string): Promise<T> {
 
   if (cached !== undefined) {
     if (!inFlightRequests.has(path)) {
-      const refresh = requestJson<T>(path).then((fresh) => {
-        setCached(path, fresh)
-        return fresh
-      }).finally(() => {inFlightRequests.delete(path)})
+      const refresh = requestJson<T>(path)
+        .then((fresh) => {
+          setCached(path, fresh)
+          return fresh
+        })
+        .finally(() => {
+          inFlightRequests.delete(path)
+        })
 
       inFlightRequests.set(path, refresh)
       void refresh.catch(() => {})
@@ -333,10 +348,14 @@ async function cachedRequestJson<T>(path: string): Promise<T> {
     return existing
   }
 
-  const requestPromise = requestJson<T>(path).then((fresh) => {
-    setCached(path, fresh)
-    return fresh
-  }).finally(() => {inFlightRequests.delete(path)})
+  const requestPromise = requestJson<T>(path)
+    .then((fresh) => {
+      setCached(path, fresh)
+      return fresh
+    })
+    .finally(() => {
+      inFlightRequests.delete(path)
+    })
 
   inFlightRequests.set(path, requestPromise)
   return requestPromise
@@ -366,16 +385,22 @@ export const useEvents = () => {
 
     const cachedEvents = getCached<EventRecord[]>('/api/events')
     if (cachedEvents) {
-      setCached('/api/events', [created, ...cachedEvents.filter((event) => event.id !== created.id)])
+      setCached('/api/events', [
+        created,
+        ...cachedEvents.filter((event) => event.id !== created.id),
+      ])
     }
 
     return created
   }
 
   async function activateEvent(id: string): Promise<EventRecord> {
-    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/activate`, {
-      method: 'POST',
-    })
+    const updated = await requestJson<EventRecord>(
+      `/api/events/${encodeURIComponent(id)}/activate`,
+      {
+        method: 'POST',
+      },
+    )
 
     cacheEvent(updated)
     invalidateCached(eventExportPath(updated.id))
@@ -395,9 +420,12 @@ export const useEvents = () => {
   }
 
   async function requestDestruction(id: string): Promise<EventRecord> {
-    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/request-destruction`, {
-      method: 'POST',
-    })
+    const updated = await requestJson<EventRecord>(
+      `/api/events/${encodeURIComponent(id)}/request-destruction`,
+      {
+        method: 'POST',
+      },
+    )
 
     cacheEvent(updated)
     invalidateCached(eventExportPath(updated.id))
@@ -406,9 +434,12 @@ export const useEvents = () => {
   }
 
   async function cancelDestruction(id: string): Promise<EventRecord> {
-    const updated = await requestJson<EventRecord>(`/api/events/${encodeURIComponent(id)}/cancel-destruction`, {
-      method: 'POST',
-    })
+    const updated = await requestJson<EventRecord>(
+      `/api/events/${encodeURIComponent(id)}/cancel-destruction`,
+      {
+        method: 'POST',
+      },
+    )
 
     cacheEvent(updated)
     invalidateCached(eventExportPath(updated.id))
@@ -424,10 +455,10 @@ export const useEvents = () => {
     eventId: string,
     payload: CreatePlannerItemRequest,
   ): Promise<PlannerItemRecord> {
-    const created = await requestJson<PlannerItemRecord>(
-      plannerItemsPath(eventId),
-      { method: 'POST', body: JSON.stringify(payload) },
-    )
+    const created = await requestJson<PlannerItemRecord>(plannerItemsPath(eventId), {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
 
     upsertCachedPositionedItem(plannerItemsPath(eventId), created)
     invalidateCached(eventExportPath(eventId))
@@ -496,10 +527,7 @@ export const useEvents = () => {
     return updated
   }
 
-  async function deletePlannerTimelineItem(
-    eventId: string,
-    itemId: string
-  ): Promise<void> {
+  async function deletePlannerTimelineItem(eventId: string, itemId: string): Promise<void> {
     await requestNoContent(
       `/api/events/${encodeURIComponent(eventId)}/planner-timeline-items/${encodeURIComponent(itemId)}`,
       { method: 'DELETE' },
@@ -513,12 +541,14 @@ export const useEvents = () => {
     return cachedRequestJson<EventBrandingRecord>(brandingPath(eventId))
   }
 
-  async function upsertEventBranding(eventId: string, payload: UpsertEventBrandingRequest): Promise<EventBrandingRecord> {
-    const branding = await requestJson<EventBrandingRecord>(
-      brandingPath(eventId), {
-        method: 'PUT', body: JSON.stringify(payload)
-      }
-    )
+  async function upsertEventBranding(
+    eventId: string,
+    payload: UpsertEventBrandingRequest,
+  ): Promise<EventBrandingRecord> {
+    const branding = await requestJson<EventBrandingRecord>(brandingPath(eventId), {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    })
 
     setCached(brandingPath(eventId), branding)
     invalidateCached(eventExportPath(eventId))
@@ -530,13 +560,16 @@ export const useEvents = () => {
     return cachedRequestJson<SocialPostRecord[]>(socialPostsPath(eventId))
   }
 
-  async function createSocialPost(eventId: string, payload: CreateSocialPostRequest): Promise<SocialPostRecord> {
+  async function createSocialPost(
+    eventId: string,
+    payload: CreateSocialPostRequest,
+  ): Promise<SocialPostRecord> {
     const created = await requestJson<SocialPostRecord>(
       `/api/events/${encodeURIComponent(eventId)}/social-posts`,
       {
         method: 'POST',
-        body: JSON.stringify(payload)
-      }
+        body: JSON.stringify(payload),
+      },
     )
 
     upsertCachedPositionedItem(socialPostsPath(eventId), created)
@@ -545,13 +578,17 @@ export const useEvents = () => {
     return created
   }
 
-  async function updateSocialPost(eventId: string, postId: string, payload: UpdateSocialPostRequest): Promise<SocialPostRecord> {
+  async function updateSocialPost(
+    eventId: string,
+    postId: string,
+    payload: UpdateSocialPostRequest,
+  ): Promise<SocialPostRecord> {
     const updated = await requestJson<SocialPostRecord>(
       `/api/events/${encodeURIComponent(eventId)}/social-posts/${encodeURIComponent(postId)}`,
       {
         method: 'PATCH',
-        body: JSON.stringify(payload)
-      }
+        body: JSON.stringify(payload),
+      },
     )
 
     upsertCachedPositionedItem(socialPostsPath(eventId), updated)
@@ -564,8 +601,8 @@ export const useEvents = () => {
     await requestNoContent(
       `/api/events/${encodeURIComponent(eventId)}/social-posts/${encodeURIComponent(postId)}`,
       {
-        method: 'DELETE'
-      }
+        method: 'DELETE',
+      },
     )
 
     removeCachedItem<SocialPostRecord>(socialPostsPath(eventId), postId)
@@ -576,8 +613,8 @@ export const useEvents = () => {
     const updated = await requestJson<EventRecord>(
       `/api/events/${encodeURIComponent(id)}/archive`,
       {
-        method: 'POST'
-      }
+        method: 'POST',
+      },
     )
 
     cacheEvent(updated)
@@ -594,13 +631,20 @@ export const useEvents = () => {
     return cachedRequestJson<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
   }
 
-  async function addEventCollaborator(eventId: string, payload: AddEventCollaboratorRequest): Promise<EventCollaboratorRecord> {
-    const collaborator = await requestJson<EventCollaboratorRecord>(collaboratorsPath(eventId), { method: 'POST', body: JSON.stringify(payload) })
+  async function addEventCollaborator(
+    eventId: string,
+    payload: AddEventCollaboratorRequest,
+  ): Promise<EventCollaboratorRecord> {
+    const collaborator = await requestJson<EventCollaboratorRecord>(collaboratorsPath(eventId), {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    })
 
     const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
     if (cached) {
       setCached(collaboratorsPath(eventId), [
-        ...cached.filter((item) => item.user_id !== collaborator.user_id), collaborator
+        ...cached.filter((item) => item.user_id !== collaborator.user_id),
+        collaborator,
       ])
     }
 
@@ -608,13 +652,20 @@ export const useEvents = () => {
     return collaborator
   }
 
-  async function updateEventCollaborator(eventId: string, userId: string, payload: UpdateEventCollaboratorRequest): Promise<EventCollaboratorRecord> {
-    const collaborator = await requestJson<EventCollaboratorRecord>(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, { method: 'PATCH', body: JSON.stringify(payload) })
+  async function updateEventCollaborator(
+    eventId: string,
+    userId: string,
+    payload: UpdateEventCollaboratorRequest,
+  ): Promise<EventCollaboratorRecord> {
+    const collaborator = await requestJson<EventCollaboratorRecord>(
+      `${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`,
+      { method: 'PATCH', body: JSON.stringify(payload) },
+    )
 
     const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
     if (cached) {
       setCached(collaboratorsPath(eventId), [
-        cached.map((item) => item.user_id === collaborator.user_id ? collaborator : item)
+        cached.map((item) => (item.user_id === collaborator.user_id ? collaborator : item)),
       ])
     }
 
@@ -623,11 +674,16 @@ export const useEvents = () => {
   }
 
   async function deleteEventCollaborator(eventId: string, userId: string): Promise<void> {
-    await requestNoContent(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, { method: 'DELETE' })
+    await requestNoContent(`${collaboratorsPath(eventId)}/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+    })
 
     const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
     if (cached) {
-      setCached(collaboratorsPath(eventId), cached.filter((item) => item.user_id !== userId))
+      setCached(
+        collaboratorsPath(eventId),
+        cached.filter((item) => item.user_id !== userId),
+      )
     }
 
     invalidateCached(eventExportPath(eventId))

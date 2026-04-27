@@ -181,7 +181,7 @@ function handleSubmit() {
 
     <div class="flex flex-wrap gap-3">
       <AppButton type="submit" :loading="loading">
-        {{ item ? (loading ? 'Saving...' : 'Save item') : (loading ? 'Adding...' : 'Add item') }}
+        {{ item ? (loading ? 'Saving...' : 'Save item') : loading ? 'Adding...' : 'Add item' }}
       </AppButton>
 
       <AppButton v-if="item" type="button" variant="ghost" @click="emit('cancel')">
