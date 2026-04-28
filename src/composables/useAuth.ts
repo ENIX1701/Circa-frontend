@@ -74,7 +74,7 @@ export const useAuth = () => {
   }
 
   async function requestMagicLink(email: string): Promise<string> {
-    const res = await fetch('/auth/request-link', {
+    const res = await fetch('/api/auth/request-link', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
@@ -89,7 +89,7 @@ export const useAuth = () => {
   }
 
   async function verifyMagicToken(token: string): Promise<void> {
-    const res = await fetch(`/auth/verify?token=${encodeURIComponent(token)}`)
+    const res = await fetch(`/api/auth/verify?token=${encodeURIComponent(token)}`)
 
     if (!res.ok) {
       throw new Error(await readErrorMessage(res))
@@ -101,7 +101,7 @@ export const useAuth = () => {
   }
 
   async function getLatestTestInboxLink(email: string): Promise<TestInboxLookupResult> {
-    const res = await fetch(`/auth/test-inbox/latest?email=${encodeURIComponent(email)}`)
+    const res = await fetch(`/api/auth/test-inbox/latest?email=${encodeURIComponent(email)}`)
 
     if (!res.ok) {
       return {

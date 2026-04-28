@@ -14,12 +14,7 @@ export default defineConfig({
   },
   server: {
     proxy: {
-      '/auth': 'http://localhost:8080',
-      '/api/me': 'http://localhost:8080',
-      '/api/events': {
-        target: 'http://localhost:8080',
-        rewrite: (path) => path.replace(/^\/api/, ''),
-      },
+      '/api': 'http://localhost:8080',
     },
   },
 })
