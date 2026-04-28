@@ -34,6 +34,7 @@ const timelineLoading = ref(true)
 const timelineCreating = ref(false)
 const updatingTimelineItemId = ref('') // I don't like this, because updating and editing are very similar
 const editingTimelineItemId = ref('') // but this became somewhat of a mess, so editing will be the backend update for now
+const editingScheduledItemId = ref('')
 const deletingTimelineItemId = ref('')
 
 function pad(value: number) {
@@ -154,6 +155,7 @@ async function handleTimelineItemSave(
     )
     replaceTimelineItem(updated)
     editingTimelineItemId.value = ''
+    editingScheduledItemId.value = ''
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to update timeline item'
   } finally {
@@ -270,12 +272,6 @@ watch(
 
     <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
 
-    <TimelineCreatePanel
-      :collaborators="collaborators"
-      :loading="timelineCreating"
-      @create="handleCreateTimelineItem"
-    />
-
     <TimelineBoard
       :items="timelineItems"
       :collaborators="collaborators"
@@ -293,10 +289,27 @@ watch(
       @remove="removeTimelineItem"
     />
 
-    <TimelineItemList
-      :items="timelineItems"
-      :loading="timelineLoading"
-      :collaborator-name="collaboratorName"
-    />
+    <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(20rem,0.8fr)]">
+      <TimelineItemList
+        :items="timelineItems"
+        :loading="timelineLoading"
+        :collaborators="collaborators"
+        :updating-item-id="updatingTimelineItemId"
+        :deleting-item-id="deletingTimelineItemId"
+        :editing-item-id="editingScheduledItemId"
+        :collaborator-name="collaboratorName"
+        @edit="editingScheduledItemId = $event.id"
+        @cancel-edit="editingScheduledItemId = ''"
+        @save="handleTimelineItemSave"
+        @remove="removeTimelineItem"
+      />
+
+      <TimelineCreatePanel
+        class="xl:sticky xl:top-8 xl:self-start"
+        :collaborators="collaborators"
+        :loading="timelineCreating"
+        @create="handleCreateTimelineItem"
+      />
+    </div>
   </div>
 </template>

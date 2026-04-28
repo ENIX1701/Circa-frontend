@@ -63,17 +63,25 @@ const timelineStart = computed(() => {
   return date
 })
 
+const minimumTimelineDays = 7
+
 const timelineEnd = computed(() => {
+  const start = timelineStart.value
+
   if (props.items.length === 0) {
     const date = startOfDay(new Date())
-    date.setDate(date.getDate() + 14)
+    date.setDate(date.getDate() + minimumTimelineDays - 1)
     return date
   }
 
   const max = Math.max(...props.items.map((item) => new Date(item.ends_at).getTime()))
-  const date = startOfDay(new Date(max))
-  date.setDate(date.getDate() + 1)
-  return date
+  const naturalEnd = startOfDay(new Date(max))
+  naturalEnd.setDate(naturalEnd.getDate() + 1)
+
+  const minimumEnd = new Date(start)
+  minimumEnd.setDate(minimumEnd.getDate() + minimumTimelineDays - 1)
+
+  return naturalEnd > minimumEnd ? naturalEnd : minimumEnd
 })
 
 const timelineDays = computed(() => {
@@ -89,8 +97,29 @@ const timelineDays = computed(() => {
 })
 
 const timelineGridTemplate = computed(
-  () => `16rem repeat(${timelineDays.value.length}, minmax(5rem, 1fr))`,
+  () => `15rem repeat(${timelineDays.value.length}, minmax(4rem, 1fr))`,
 )
+
+function statusLabel(status: PlannerTimelineStatus) {
+  return status.replace('_', ' ')
+}
+
+function typeLabel(type: PlannerTimelineItemRecord['item_type']) {
+  return type.charAt(0).toUpperCase() + type.slice(1)
+}
+
+const timelineRows = computed(() => props.items.filter((item) => item.item_type !== 'milestone'))
+const milestoneItems = computed(() => props.items.filter((item) => item.item_type === 'milestone'))
+
+function milestoneStyle(item: PlannerTimelineItemRecord) {
+  const start = startOfDay(new Date(item.starts_at))
+  const offset = Math.max(0, Math.round((start.getTime() - timelineStart.value.getTime()) / dayMs))
+
+  return {
+    gridColumn: `${offset + 2} / span 1`,
+    gridRow: '1',
+  }
+}
 
 function timelineColor(item: PlannerTimelineItemRecord) {
   if (item.color) return item.color
@@ -118,12 +147,13 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
     gridColumn: `${offset + 2} / span ${duration}`,
     gridRow: '1',
     backgroundColor: timelineColor(item),
+    borderColor: timelineColor(item),
   }
 }
 </script>
 
 <template>
-  <AppPanel tone="muted" class="space-y-6">
+  <AppPanel tone="muted" class="space-y-6 overflow-hidden">
     <div>
       <p class="section-label">Gantt</p>
       <h2 class="mt-2 text-2xl font-black text-(--app-text)">Timeline</h2>
@@ -137,17 +167,24 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
       description="Add the first asset or milestone above :3"
     />
 
-    <div v-else class="overflow-x-auto">
-      <div class="min-w-80 space-y-2">
+    <div
+      v-else
+      class="overflow-x-auto rounded-xl border border-(--app-border) bg-(--app-bg-subtle)"
+    >
+      <div class="min-w-80">
         <div
-          class="grid items-center text-xs uppercase text-(--app-text-muted)"
+          class="grid items-center border-b border-(--app-border) bg-(--app-surface) text-xs font-bold uppercase text-(--app-text-muted)"
           :style="{ gridTemplateColumns: timelineGridTemplate }"
         >
-          <div class="sticky left-0 z-20 bg-(--app-surface-muted) px-3 py-2">Item</div>
+          <div
+            class="sticky left-0 z-20 border-r border-(--app-border) bg-(--app-surface) px-3 py-2"
+          >
+            Item
+          </div>
           <div
             v-for="day in timelineDays"
             :key="day.toISOString()"
-            class="border border-(--app-border) px-2 py-2"
+            class="border-r border-(--app-border) px-2 py-2"
           >
             {{ formatTimelineDay(day) }}
           </div>
@@ -155,41 +192,101 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
       </div>
 
       <div
-        v-for="item in items"
-        :key="item.id"
-        class="grid min-h-16 items-center rounded-xl border border-(--app-border) bg-(--app-bg-subtle)"
+        v-if="milestoneItems.length"
+        class="grid min-h-14 items-center border-b border-(--app-border) bg-(--app-bg-subtle)"
         :style="{ gridTemplateColumns: timelineGridTemplate }"
       >
-        <div class="sticky left-0 z-20 h-full bg-(--app-bg-subtle) px-3 py-3">
+        <div
+          class="sticky left-0 z-20 h-full border-r border-(--app-border) bg-(--app-bg-subtle) px-3 py-3"
+        >
+          <p class="text-xs font-bold uppercase text-(--app-text-muted)">Milestones</p>
+        </div>
+
+        <div
+          v-for="day in timelineDays"
+          :key="`milestones-${day.toISOString()}`"
+          class="h-full border-r border-(--app-border) last:border-r-0"
+        />
+
+        <div
+          v-for="milestone in milestoneItems"
+          :key="milestone.id"
+          class="z-10 flex min-w-0 items-center justify-center gap-2 px-2"
+          :style="milestoneStyle(milestone)"
+          :title="milestone.title"
+        >
+          <span
+            class="h-3 w-3 shrink-0 rotate-45 rounded-xs border shadow-sm"
+            :style="{
+              backgroundColor: timelineColor(milestone),
+              borderColor: timelineColor(milestone),
+            }"
+          />
+
+          <span
+            class="min-w-0 max-w-28 rounded-md bg-(--app-surface) px-2 py-1 text-xs font-bold text-(--app-text)"
+          >
+            {{ milestone.title }}
+          </span>
+        </div>
+      </div>
+
+      <div
+        v-for="item in timelineRows"
+        :key="item.id"
+        class="grid min-h-18 items-center rounded-xl border border-(--app-border) bg-(--app-bg-subtle) last:border-b-0"
+        :style="{ gridTemplateColumns: timelineGridTemplate }"
+      >
+        <div
+          class="sticky left-0 z-20 h-full border-r border-(--app-border) bg-(--app-bg-subtle) px-3 py-3"
+        >
           <p class="text-sm font-bold text-(--app-text)">{{ item.title }}</p>
-          <p class="mt-1 text-xs text-(--app-text-muted)">
-            {{ item.item_type }}
-            <span v-if="item.owner"> / {{ item.owner }}</span>
-            <span v-if="item.assigned_user_id">
-              / assigned to {{ collaboratorName(item.assigned_user_id) }}</span
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span
+              class="rounded-md border border-(--app-border) bg-(--app-surface) px-2 py-1 text-xs uppercase text-(--app-text)"
             >
+              {{ typeLabel(item.item_type) }}
+            </span>
+
+            <span
+              v-if="item.owner"
+              class="rounded-md bg-(--app-surface) px-2 py-1 text-xs font-semibold text-(--app-text)"
+              >Owner: {{ item.owner }}</span
+            >
+
+            <span
+              v-if="item.assigned_user_id"
+              class="rounded-md bg-(--app-surface) px-2 py-1 text-xs font-semibold text-(--app-text)"
+            >
+              {{ collaboratorName(item.assigned_user_id) }}</span
+            >
+          </div>
+          <p v-if="item.notes" class="mt-2 text-xs line-clamp-2 leading-4 text-(--app-text-muted)">
+            {{ item.notes }}
           </p>
         </div>
 
         <div
           v-for="day in timelineDays"
           :key="`${item.id}-${day.toISOString()}`"
-          class="h-full border border-(--app-border)"
+          class="h-full border-r border-(--app-border) last:border-r-0"
         />
 
         <div
-          class="z-10 mx-1 rounded-lg px-3 py-2 text-xs font-bold text-black"
+          class="z-10 mx-1 rounded-md border px-3 py-2 text-xs font-bold text-(--app-bg-subtle)"
           :class="
             item.item_type === 'milestone' ? 'aspect-square w-10 rotate-45 justify-self-center' : ''
           "
           :style="timelineBarStyle(item)"
         >
           <span :class="item.item_type === 'milestone' ? 'block -rotate-45 text-center' : ''">{{
-            item.status
+            statusLabel(item.status)
           }}</span>
         </div>
 
-        <div class="col-start-1 -col-end-1 px-3 py-3">
+        <div
+          class="col-start-1 -col-end-1 border-t border-(--app-border) bg-(--app-surface) px-3 py-3"
+        >
           <TimelineItemForm
             v-if="editingItemId === item.id"
             :item="item"
@@ -199,7 +296,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
             @cancel="emit('cancelEdit')"
           />
 
-          <div v-else class="flex flex-wrap items-center gap-3">
+          <div v-else class="flex flex-wrap items-center justify-between gap-3">
             <AppSelect
               :model-value="item.status"
               :options="statusOptions"
@@ -208,49 +305,49 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
               @update:model-value="emit('statusChange', item, $event as PlannerTimelineStatus)"
             />
 
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              :disabled="updatingItemId === item.id"
-              @click="emit('shift', item, -1)"
-              >Move -1 day</AppButton
-            >
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              :disabled="updatingItemId === item.id"
-              @click="emit('shift', item, 1)"
-              >Move 1 day</AppButton
-            >
-            <AppButton
-              v-if="item.item_type !== 'milestone'"
-              type="button"
-              variant="ghost"
-              size="sm"
-              :disabled="updatingItemId === item.id"
-              @click="emit('extend', item, 1)"
-              >Extend +1 day</AppButton
-            >
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              :disabled="updatingItemId === item.id"
-              @click="emit('edit', item)"
-              >Edit</AppButton
-            >
-            <AppButton
-              type="button"
-              variant="ghost"
-              size="sm"
-              :disabled="deletingItemId === item.id"
-              @click="emit('remove', item.id)"
-              >{{ deletingItemId === item.id ? 'Removing...' : 'Remove' }}</AppButton
-            >
-
-            <p v-if="item.notes" class="text-xs text-(--app-text-muted)">{{ item.notes }}</p>
+            <div>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                :disabled="updatingItemId === item.id"
+                @click="emit('shift', item, -1)"
+                >Move -1 day</AppButton
+              >
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                :disabled="updatingItemId === item.id"
+                @click="emit('shift', item, 1)"
+                >Move 1 day</AppButton
+              >
+              <AppButton
+                v-if="item.item_type !== 'milestone'"
+                type="button"
+                variant="ghost"
+                size="sm"
+                :disabled="updatingItemId === item.id"
+                @click="emit('extend', item, 1)"
+                >Extend +1 day</AppButton
+              >
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                :disabled="updatingItemId === item.id"
+                @click="emit('edit', item)"
+                >Edit</AppButton
+              >
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                :disabled="deletingItemId === item.id"
+                @click="emit('remove', item.id)"
+                >{{ deletingItemId === item.id ? 'Removing...' : 'Remove' }}</AppButton
+              >
+            </div>
           </div>
         </div>
       </div>

@@ -1,13 +1,27 @@
 <script setup lang="ts">
-import type { PlannerTimelineItemRecord } from '@/composables/useEvents'
+import type { EventCollaboratorRecord, PlannerTimelineItemRecord } from '@/composables/useEvents'
 import AppPanel from '../ui/AppPanel.vue'
 import AppEmptyState from '../ui/AppEmptyState.vue'
 import AppBadge from '../ui/AppBadge.vue'
+import type { TimelineItemFormPayload } from './TimelineItemForm.vue'
+import TimelineItemForm from './TimelineItemForm.vue'
+import AppButton from '../ui/AppButton.vue'
 
 defineProps<{
   items: PlannerTimelineItemRecord[]
+  collaborators: EventCollaboratorRecord[]
   loading: boolean
+  updatingItemId: string
+  deletingItemId: string
+  editingItemId: string
   collaboratorName: (userId: string) => string
+}>()
+
+const emit = defineEmits<{
+  edit: [item: PlannerTimelineItemRecord]
+  cancelEdit: []
+  save: [item: PlannerTimelineItemRecord, payload: TimelineItemFormPayload]
+  remove: [itemId: string]
 }>()
 
 function statusTone(status: PlannerTimelineItemRecord['status']) {
@@ -40,7 +54,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
     <div class="flex items-start justify-between gap-4">
       <div>
         <p class="section-label">Timeline items</p>
-        <h2 class="mt-2 text-2xl font-black text-(--app-text)">All scheduled work</h2>
+        <h2 class="mt-2 text-xl font-black text-(--app-text)">All scheduled work</h2>
       </div>
     </div>
 
@@ -52,41 +66,68 @@ function formatWindow(item: PlannerTimelineItemRecord) {
       description="Add the first item now! :3"
     />
 
-    <div v-else class="grid gap-3">
+    <div v-else class="grid max-h-136 gap-3 overflow-y-auto pr-2">
       <article
         v-for="item in items"
         :key="item.id"
-        class="rounded-2xl border border-(--app-border) bg-(--app-bg-subtle) p-4"
+        class="rounded-xl border border-(--app-border) bg-(--app-bg-subtle) p-4"
       >
-        <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
-          <div>
-            <div class="flex flex-wrap items-center gap-3">
-              <h3 class="font-bold text-(--app-text)">{{ item.title }}</h3>
-              <AppBadge :tone="statusTone(item.status)">{{ item.status }}</AppBadge>
+        <TimelineItemForm
+          v-if="editingItemId === item.id"
+          :item="item"
+          :collaborators="collaborators"
+          :loading="updatingItemId === item.id"
+          @submit="emit('save', item, $event)"
+          @cancel="emit('cancelEdit')"
+        />
+
+        <template v-else>
+          <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+            <div>
+              <div class="flex flex-wrap items-center gap-3">
+                <h3 class="font-bold text-(--app-text)">{{ item.title }}</h3>
+                <AppBadge :tone="statusTone(item.status)">{{ item.status }}</AppBadge>
+              </div>
+
+              <p class="mt-2 text-sm font-semibold text-(--app-text)">
+                {{ item.item_type }} / {{ formatWindow(item) }}
+              </p>
+
+              <p v-if="item.assigned_user_id" class="mt-1 text-sm text-(--app-text)">
+                Assigned to {{ collaboratorName(item.assigned_user_id) || 'unknown' }}
+              </p>
+
+              <p v-if="item.owner" class="mt-1 text-sm text-(--app-text)">
+                Owner: {{ item.owner }}
+              </p>
             </div>
 
-            <p class="mt-2 text-sm text-(--app-text-muted)">
-              {{ item.item_type }} / {{ formatWindow(item) }}
-            </p>
+            <div class="flex shrink-0 items-center gap-2">
+              <div
+                class="h-8 w-8 rounded-lg border border-(--app-border)"
+                :style="{ backgroundColor: item.color || 'var(--app-accent)' }"
+              />
 
-            <p v-if="item.assigned_user_id" class="mt-1 text-sm text-(--app-text-muted)">
-              Assigned to {{ collaboratorName(item.assigned_user_id) || 'unknown' }}
-            </p>
+              <AppButton type="button" variant="ghost" size="sm" @click="emit('edit', item)">
+                Edit
+              </AppButton>
 
-            <p v-if="item.owner" class="mt-1 text-sm text-(--app-text-muted)">
-              Owner: {{ item.owner }}
-            </p>
+              <AppButton
+                type="button"
+                variant="ghost"
+                size="sm"
+                :loading="deletingItemId === item.id"
+                @click="emit('remove', item.id)"
+              >
+                Remove
+              </AppButton>
+            </div>
           </div>
 
-          <div
-            class="h-8 w-8 rounded-lg border border-(--app-border)"
-            :style="{ backgroundColor: item.color || 'var(--app-accent)' }"
-          />
-        </div>
-
-        <p v-if="item.notes" class="mt-3 text-sm leading-6 text-(--app-text-muted)">
-          {{ item.notes }}
-        </p>
+          <p v-if="item.notes" class="mt-3 text-sm leading-6 text-(--app-text-muted)">
+            {{ item.notes }}
+          </p>
+        </template>
       </article>
     </div>
   </AppPanel>

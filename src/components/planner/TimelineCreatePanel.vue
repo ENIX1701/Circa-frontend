@@ -18,7 +18,7 @@ const emit = defineEmits<{
   <AppPanel class="space-y-6">
     <div>
       <p class="section-label">Timeline</p>
-      <h2 class="mt-2 text-2xl font-black text-(--app-text)">Add scheduled work</h2>
+      <h2 class="mt-2 text-xl font-black text-(--app-text)">Add scheduled work</h2>
       <p class="mt-2 text-sm text-(--app-text-muted)">Add a new item to the timeline!</p>
     </div>
 
