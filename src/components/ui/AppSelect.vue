@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ChevronDown } from 'lucide-vue-next';
+import { ChevronDown } from 'lucide-vue-next'
 
 defineOptions({ inheritAttrs: false })
 
@@ -33,6 +33,9 @@ const emit = defineEmits<{
       </option>
     </select>
 
-    <ChevronDown class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--app-text-muted)" aria-hidden="true" />
+    <ChevronDown
+      class="pointer-events-none absolute right-3 top-1/2 h-4 w-4 -translate-y-1/2 text-(--app-text-muted)"
+      aria-hidden="true"
+    />
   </div>
 </template>

@@ -4,7 +4,7 @@
 npm run format
 npm run lint
 npm run type-check
-npm run test:unit
+npm run test:unit -- --run
 npm run build
 ```
 
