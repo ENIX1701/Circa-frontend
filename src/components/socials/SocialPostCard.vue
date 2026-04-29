@@ -49,7 +49,7 @@ const emit = defineEmits<{
 
       <AppButton
         type="button"
-        variant="ghost"
+        variant="danger-ghost"
         size="sm"
         :loading="deleting"
         @click="emit('remove', post.id)"

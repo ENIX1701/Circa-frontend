@@ -144,7 +144,7 @@ textarea:disabled {
 .app-action--primary {
   border-color: var(--app-accent);
   background: var(--app-accent);
-  columns: #fff;
+  color: #fff;
 }
 
 .app-action--primary:hover {
@@ -155,7 +155,7 @@ textarea:disabled {
 .app-action--secondary {
   border-color: var(--app-border);
   background: var(--app-surface);
-  columns: var(--app-text);
+  color: var(--app-text);
 }
 
 .app-action--secondary:hover {
@@ -166,23 +166,35 @@ textarea:disabled {
 .app-action--ghost {
   border-color: transparent;
   background: transparent;
-  columns: var(--app-text-muted);
+  color: var(--app-text-muted);
 }
 
 .app-action--ghost:hover {
   border-color: var(--app-border);
   background: var(--app-surface-muted);
-  columns: var(--app-text);
+  color: var(--app-text);
 }
 
 .app-action--danger {
   border-color: var(--app-danger);
   background: var(--app-danger);
-  columns: #fff;
+  color: #fff;
 }
 
 .app-action--danger:hover {
   background: #b91c1c;
+}
+
+.app-action--danger-ghost {
+  border-color: transparent;
+  background: transparent;
+  color: var(--app-danger);
+}
+
+.app-action--danger-ghost:hover {
+  border-color: var(--app-danger);
+  background: color-mix(in srgb, var(--app-danger) 14%, transparent);
+  color: var(--app-danger);
 }
 
 .app-clickable-surface {

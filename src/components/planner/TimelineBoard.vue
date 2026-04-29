@@ -342,7 +342,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
               /></AppButton>
               <AppButton
                 type="button"
-                variant="ghost"
+                variant="danger-ghost"
                 size="sm"
                 :disabled="deletingItemId === item.id"
                 :aria-label="deletingItemId === item.id ? 'Removing item...' : 'Remove item'"

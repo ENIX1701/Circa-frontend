@@ -47,7 +47,7 @@ const emit = defineEmits<{
       <AppButton
         v-if="canManage"
         type="button"
-        variant="ghost"
+        variant="danger-ghost"
         size="sm"
         :loading="deleting"
         @click="emit('remove', member)"

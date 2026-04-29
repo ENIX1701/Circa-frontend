@@ -3,7 +3,7 @@ import { Loader2 } from 'lucide-vue-next'
 
 withDefaults(
   defineProps<{
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-ghost'
     size?: 'sm' | 'md'
     loading?: boolean
     disabled?: boolean

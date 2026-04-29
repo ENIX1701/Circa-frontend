@@ -8,7 +8,7 @@ const props = withDefaults(
   defineProps<{
     to?: RouteLocationRaw
     href?: string
-    variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+    variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'danger-ghost'
     size?: 'sm' | 'md'
   }>(),
   {

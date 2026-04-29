@@ -94,7 +94,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
 
               <AppButton
                 type="button"
-                variant="ghost"
+                variant="danger-ghost"
                 size="sm"
                 :loading="deletingItemId === item.id"
                 @click="emit('remove', item.id)"
