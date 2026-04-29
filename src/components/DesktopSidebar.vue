@@ -87,12 +87,8 @@ watch(eventId, (id) => void loadCurrentEvent(id), { immediate: true })
             v-for="item in navItems"
             :key="item.key"
             :to="item.to"
-            class="flex items-center gap-3 rounded-lg border px-3 py-2 text-sm font-semibold"
-            :class="
-              isActive(item)
-                ? 'border-(--app-accent) bg-(--app-bg-subtle) text-(--app-text)'
-                : 'border-transparent text-(--app-text-muted)'
-            "
+            class="app-nav-item app-nav-item--desktop"
+            :class="{ 'app-nav-item--active': isActive(item) }"
           >
             <component :is="item.icon" class="h-4 w-4 shrink-0" />
             <span>{{ item.title }}</span>

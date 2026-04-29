@@ -28,7 +28,7 @@ describe('shared app UI components', () => {
     expect(loading.text()).toContain('Delete')
     expect(loading.find('svg').exists()).toBe(true)
     expect(disabled.find('button').attributes('disabled')).toBeDefined()
-    expect(disabled.find('button').classes()).toContain('text-xs')
+    expect(disabled.find('button').classes()).toContain('app-action--sm')
   })
 
   it('emits v-model changes from input, select, and textarea controls', async () => {

@@ -13,6 +13,7 @@ import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
 import { plannerTimelineStatusOptions } from '@/config/formOptions'
 import AppPanelHeader from '../ui/AppPanelHeader.vue'
+import { CalendarPlus, Edit2, Loader2, MoveLeft, MoveRight, Trash2 } from 'lucide-vue-next'
 
 const props = defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -297,48 +298,61 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
               @update:model-value="emit('statusChange', item, $event as PlannerTimelineStatus)"
             />
 
-            <div>
+            <div class="flex flex-wrap items-center gap-1">
               <AppButton
                 type="button"
                 variant="ghost"
                 size="sm"
                 :disabled="updatingItemId === item.id"
+                aria-label="Move item one day earlier"
+                title="Move item one day earlier"
                 @click="emit('shift', item, -1)"
-                >Move -1 day</AppButton
-              >
+                ><MoveLeft class="h-4 w-4" aria-hidden="true"
+              /></AppButton>
               <AppButton
                 type="button"
                 variant="ghost"
                 size="sm"
                 :disabled="updatingItemId === item.id"
+                aria-label="Move item one day later"
+                title="Move item one day later"
                 @click="emit('shift', item, 1)"
-                >Move 1 day</AppButton
-              >
+                ><MoveRight class="h-4 w-4" aria-hidden="true"
+              /></AppButton>
               <AppButton
                 v-if="item.item_type !== 'milestone'"
                 type="button"
                 variant="ghost"
                 size="sm"
                 :disabled="updatingItemId === item.id"
+                aria-label="Extend item by one day"
+                title="Extend item by one day"
                 @click="emit('extend', item, 1)"
-                >Extend +1 day</AppButton
-              >
+                ><CalendarPlus class="h-4 w-4" aria-hidden="true"
+              /></AppButton>
               <AppButton
                 type="button"
                 variant="ghost"
                 size="sm"
                 :disabled="updatingItemId === item.id"
+                aria-label="Edit item"
+                title="Edit"
                 @click="emit('edit', item)"
-                >Edit</AppButton
-              >
+                ><Edit2 class="h-4 w-4" aria-hidden="true"
+              /></AppButton>
               <AppButton
                 type="button"
                 variant="ghost"
                 size="sm"
                 :disabled="deletingItemId === item.id"
+                :aria-label="deletingItemId === item.id ? 'Removing item...' : 'Remove item'"
+                :title="deletingItemId === item.id ? 'Removing...' : 'Remove'"
                 @click="emit('remove', item.id)"
-                >{{ deletingItemId === item.id ? 'Removing...' : 'Remove' }}</AppButton
-              >
+                ><Loader2
+                  v-if="deletingItemId === item.id"
+                  class="h-4 w-4 animate-spin"
+                  aria-hidden="true" /><Trash2 v-else class="h-4 w-4" aria-hidden="true"
+              /></AppButton>
             </div>
           </div>
         </div>

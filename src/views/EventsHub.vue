@@ -74,7 +74,7 @@ onMounted(() => {
         <AppEmptyState
           v-else-if="events.length === 0"
           title="No events yet :c"
-          description="Create your first event using the form on the right :3"
+          description="Create your first event using the new event form :3"
         />
 
         <div v-else class="space-y-4">

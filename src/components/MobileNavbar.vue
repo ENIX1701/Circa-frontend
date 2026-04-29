@@ -55,12 +55,8 @@ function isActive(item: NavItem) {
         v-for="item in navItems"
         :key="item.key"
         :to="item.to"
-        class="flex min-w-20 flex-col items-center justify-center gap-1 rounded-lg border px-2 py-2 text-center text-xs font-semibold"
-        :class="
-          isActive(item)
-            ? 'border-(--app-accent) bg-(--app-bg-subtle) text-(--app-text)'
-            : 'border-transparent text-(--app-text-muted)'
-        "
+        class="app-nav-item app-nav-item--mobile"
+        :class="{ 'app-nav-item--active': isActive(item) }"
       >
         <component :is="item.icon" class="h-5 w-5 shrink-0" />
         <span class="leading-none">{{ item.title }}</span>

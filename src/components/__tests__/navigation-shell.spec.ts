@@ -87,7 +87,7 @@ describe('navigation shell components', () => {
     expect(desktop.text()).toContain('Branding')
     expect(desktop.text()).toContain('evt-1')
     expect(desktop.find('[data-to="/events/evt-1/planner"]').classes()).toContain(
-      'border-(--app-accent)',
+      'app-nav-item--active',
     )
     expect(mobile.text()).toContain('Socials')
     expect(mobile.find('[data-to="/events/evt-1"]').exists()).toBe(true)

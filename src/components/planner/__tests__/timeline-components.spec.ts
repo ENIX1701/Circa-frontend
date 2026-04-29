@@ -160,19 +160,19 @@ describe('planner timeline components', () => {
     await wrapper.find('select').setValue('done')
     await wrapper
       .findAll('button')
-      .find((button) => button.text() === 'Move -1 day')
+      .find((button) => button.attributes('aria-label') === 'Move item one day earlier')
       ?.trigger('click')
     await wrapper
       .findAll('button')
-      .find((button) => button.text() === 'Extend +1 day')
+      .find((button) => button.attributes('aria-label') === 'Extend item by one day')
       ?.trigger('click')
     await wrapper
       .findAll('button')
-      .find((button) => button.text() === 'Edit')
+      .find((button) => button.attributes('aria-label') === 'Edit item')
       ?.trigger('click')
     await wrapper
       .findAll('button')
-      .find((button) => button.text() === 'Remove')
+      .find((button) => button.attributes('aria-label') === 'Remove item')
       ?.trigger('click')
 
     expect(wrapper.text()).toContain('Build landing stage')
