@@ -5,6 +5,7 @@ import AppAlert from '@/components/ui/AppAlert.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import AppPanel from '@/components/ui/AppPanel.vue'
+import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
 import {
   type CreateSocialPostRequest,
   type SocialPostRecord,
@@ -159,12 +160,10 @@ watch(
 
     <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
       <AppPanel class="space-y-6">
-        <div>
-          <p class="section-label">{{ editingPost ? 'Edit' : 'Create' }}</p>
-          <h2 class="mt-2 text-2xl font-black text-(--app-text)">
-            {{ editingPost ? 'Edit post' : 'New post' }}
-          </h2>
-        </div>
+        <AppPanelHeader
+          :eyebrow="editingPost ? 'Edit' : 'Create'"
+          :title="editingPost ? 'Edit post' : 'New post'"
+        />
 
         <SocialPostForm
           :post="editingPost"
@@ -176,12 +175,7 @@ watch(
       </AppPanel>
 
       <AppPanel tone="muted" class="space-y-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="section-label">Posts</p>
-            <h2 class="mt-2 text-2xl font-black text-(--app-text)">Draft queue</h2>
-          </div>
-        </div>
+        <AppPanelHeader eyebrow="Posts" title="Draft queue" />
 
         <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading social posts...</div>
 

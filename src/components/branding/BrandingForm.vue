@@ -6,6 +6,7 @@ import ColorField from '../ui/ColorField.vue'
 import AppSelect from '../ui/AppSelect.vue'
 import AppTextarea from '../ui/AppTextarea.vue'
 import AppButton from '../ui/AppButton.vue'
+import { themeOptions } from '@/config/formOptions'
 
 const props = defineProps<{
   form: UpsertEventBrandingRequest
@@ -16,11 +17,6 @@ const emit = defineEmits<{
   save: []
   'update:form': [value: UpsertEventBrandingRequest]
 }>()
-
-const themeOptions: Array<{ label: string; value: EventBrandingRecord['theme_mode'] }> = [
-  { label: 'dark', value: 'dark' },
-  { label: 'light', value: 'light' },
-]
 
 function updateForm(patch: Partial<UpsertEventBrandingRequest>) {
   emit('update:form', { ...props.form, ...patch })

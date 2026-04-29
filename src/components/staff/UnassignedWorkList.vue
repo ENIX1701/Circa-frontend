@@ -2,6 +2,8 @@
 import type { PlannerTimelineItemRecord } from '@/composables/useEvents'
 import AppPanel from '../ui/AppPanel.vue'
 import AppEmptyState from '../ui/AppEmptyState.vue'
+import PlannerStatusBadge from '../planner/PlannerStatusBadge.vue'
+import AppPanelHeader from '../ui/AppPanelHeader.vue'
 
 defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -21,10 +23,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
 
 <template>
   <AppPanel class="space-y-4">
-    <div>
-      <p class="section-label">Unassigned work >:c</p>
-      <h2 class="mt-2 text-2xl font-black text-(--app-text)">Needs a person</h2>
-    </div>
+    <AppPanelHeader eyebrow="Unassigned work >:c" title="Needs a person" />
 
     <AppEmptyState
       v-if="items.length === 0"
@@ -36,12 +35,14 @@ function formatWindow(item: PlannerTimelineItemRecord) {
       <article
         v-for="item in items"
         :key="item.id"
-        class="roudned-xl border border-(--app-border) bg-(--app-bg-subtle) p-4"
+        class="rounded-xl border border-(--app-border) bg-(--app-bg-subtle) p-4"
       >
         <p class="text-sm font-bold text-(--app-text)">{{ item.title }}</p>
-        <p class="mt-1 text-xs text-(--app-text-muted)">
-          {{ item.item_type }} / {{ item.status }} / {{ formatWindow(item) }}
-        </p>
+        <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-(--app-text-muted)">
+          <span>{{ item.item_type }}</span>
+          <PlannerStatusBadge :status="item.status" />
+          <span>{{ formatWindow(item) }}</span>
+        </div>
       </article>
     </div>
   </AppPanel>

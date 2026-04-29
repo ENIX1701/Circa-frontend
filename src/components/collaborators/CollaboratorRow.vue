@@ -2,7 +2,8 @@
 import type { EventCollaboratorRecord, EventMembershipRole } from '@/composables/useEvents'
 import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
-import AppBadge from '../ui/AppBadge.vue'
+import RoleBadge from './RoleBadge.vue'
+import { roleOptions } from '@/config/formOptions'
 
 defineProps<{
   member: EventCollaboratorRecord
@@ -15,26 +16,6 @@ const emit = defineEmits<{
   roleChange: [member: EventCollaboratorRecord, role: EventMembershipRole]
   remove: [member: EventCollaboratorRecord]
 }>()
-
-const roleOptions: Array<{ label: string; value: EventMembershipRole }> = [
-  { label: 'organizer', value: 'organizer' },
-  { label: 'staff', value: 'staff' },
-  { label: 'volunteer', value: 'volunteer' },
-  { label: 'owner', value: 'owner' },
-]
-
-function roleTone(role: EventMembershipRole) {
-  switch (role) {
-    case 'owner':
-      return 'accent'
-    case 'organizer':
-      return 'success'
-    case 'staff':
-      return 'warning'
-    case 'volunteer':
-      return 'default'
-  }
-}
 </script>
 
 <template>
@@ -44,7 +25,7 @@ function roleTone(role: EventMembershipRole) {
     <div>
       <div class="flex flex-wrap items-center gap-3">
         <p class="font-bold text-(--app-text)">{{ member.name }} {{ member.surname }}</p>
-        <AppBadge :tone="roleTone(member.role)">{{ member.role }}</AppBadge>
+        <RoleBadge :role="member.role" />
       </div>
 
       <p class="mt-1 text-sm text-(--app-text-muted)">{{ member.email }}</p>

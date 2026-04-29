@@ -11,6 +11,8 @@ import AppEmptyState from '../ui/AppEmptyState.vue'
 import TimelineItemForm from './TimelineItemForm.vue'
 import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
+import { plannerTimelineStatusOptions } from '@/config/formOptions'
+import AppPanelHeader from '../ui/AppPanelHeader.vue'
 
 const props = defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -33,13 +35,6 @@ const emit = defineEmits<{
 }>()
 
 const dayMs = 1000 * 60 * 60 * 24
-
-const statusOptions: Array<{ label: string; value: PlannerTimelineStatus }> = [
-  { label: 'planned', value: 'planned' },
-  { label: 'in progress', value: 'in_progress' },
-  { label: 'blocked', value: 'blocked' },
-  { label: 'done', value: 'done' },
-]
 
 function startOfDay(date: Date) {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate())
@@ -154,10 +149,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
 
 <template>
   <AppPanel tone="muted" class="space-y-6 overflow-hidden">
-    <div>
-      <p class="section-label">Gantt</p>
-      <h2 class="mt-2 text-2xl font-black text-(--app-text)">Timeline</h2>
-    </div>
+    <AppPanelHeader eyebrow="Timeline" title="All scheduled work" size="md" />
 
     <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading timeline...</div>
 
@@ -299,7 +291,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
           <div v-else class="flex flex-wrap items-center justify-between gap-3">
             <AppSelect
               :model-value="item.status"
-              :options="statusOptions"
+              :options="plannerTimelineStatusOptions"
               class="max-w-40"
               :disabled="updatingItemId === item.id"
               @update:model-value="emit('statusChange', item, $event as PlannerTimelineStatus)"

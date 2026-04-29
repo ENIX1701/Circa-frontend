@@ -2,7 +2,7 @@
 import type { EventCollaboratorRecord, PlannerTimelineItemRecord } from '@/composables/useEvents'
 import AppPanel from '../ui/AppPanel.vue'
 import AppEmptyState from '../ui/AppEmptyState.vue'
-import AppBadge from '../ui/AppBadge.vue'
+import PlannerStatusBadge from '../planner/PlannerStatusBadge.vue'
 import type { TimelineItemFormPayload } from './TimelineItemForm.vue'
 import TimelineItemForm from './TimelineItemForm.vue'
 import AppButton from '../ui/AppButton.vue'
@@ -23,19 +23,6 @@ const emit = defineEmits<{
   save: [item: PlannerTimelineItemRecord, payload: TimelineItemFormPayload]
   remove: [itemId: string]
 }>()
-
-function statusTone(status: PlannerTimelineItemRecord['status']) {
-  switch (status) {
-    case 'planned':
-      return 'default'
-    case 'in_progress':
-      return 'accent'
-    case 'blocked':
-      return 'danger'
-    case 'done':
-      return 'success'
-  }
-}
 
 function formatWindow(item: PlannerTimelineItemRecord) {
   const formatter = new Intl.DateTimeFormat(undefined, {
@@ -86,7 +73,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
             <div>
               <div class="flex flex-wrap items-center gap-3">
                 <h3 class="font-bold text-(--app-text)">{{ item.title }}</h3>
-                <AppBadge :tone="statusTone(item.status)">{{ item.status }}</AppBadge>
+                <PlannerStatusBadge :status="item.status" />
               </div>
 
               <p class="mt-2 text-sm font-semibold text-(--app-text)">

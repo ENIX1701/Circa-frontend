@@ -5,6 +5,7 @@ import AppField from '../ui/AppField.vue'
 import AppInput from '../ui/AppInput.vue'
 import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
+import { roleOptions } from '@/config/formOptions'
 
 defineProps<{
   loading?: boolean
@@ -18,13 +19,6 @@ const form = reactive({
   email: '',
   role: 'staff' as EventMembershipRole,
 })
-
-const roleOptions: Array<{ label: string; value: EventMembershipRole }> = [
-  { label: 'organizer', value: 'organizer' },
-  { label: 'staff', value: 'staff' },
-  { label: 'volunteer', value: 'volunteer' },
-  { label: 'owner', value: 'owner' },
-]
 
 function handleSubmit() {
   const email = form.email.trim().toLowerCase()

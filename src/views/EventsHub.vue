@@ -8,6 +8,7 @@ import AppPanel from '@/components/ui/AppPanel.vue'
 import EventCreateForm from '@/components/events/EventCreateForm.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
 import EventCard from '@/components/events/EventCard.vue'
+import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
 
 const router = useRouter()
 const { listEvents, createEvent } = useEvents()
@@ -66,12 +67,7 @@ onMounted(() => {
 
     <div class="grid gap-8 xl:grid-cols-[minmax(0,1fr)_minmax(0,2fr)]">
       <AppPanel tone="muted" class="space-y-6">
-        <div class="flex items-start justify-between gap-4">
-          <div>
-            <p class="section-label">Events you have access to</p>
-            <h2 class="mt-2 text-2xl font-black text-(--app-text)">Event list</h2>
-          </div>
-        </div>
+        <AppPanelHeader eyebrow="Events you have access to" title="Event list" />
 
         <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading events...</div>
 
@@ -87,13 +83,11 @@ onMounted(() => {
       </AppPanel>
 
       <AppPanel class="space-y-6">
-        <div>
-          <p class="section-label">Create</p>
-          <h2 class="mt-2 text-2xl font-black text-(--app-text)">New event</h2>
-          <p class="mt-2 text-sm leading-6 text-(--app-text-muted)">
-            Your next great adventure begins here :3
-          </p>
-        </div>
+        <AppPanelHeader
+          eyebrow="Create"
+          title="New event"
+          description="Your next great adventure begins here :3"
+        />
 
         <EventCreateForm :loading="creating" @create="handleCreateEvent" />
       </AppPanel>

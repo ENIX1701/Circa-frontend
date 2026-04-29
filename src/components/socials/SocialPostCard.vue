@@ -1,9 +1,10 @@
 <script setup lang="ts">
 import type { SocialPostRecord } from '@/composables/useEvents'
 import AppPanel from '../ui/AppPanel.vue'
-import AppBadge from '../ui/AppBadge.vue'
 import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
+import SocialPostStatusBadge from './SocialPostStatusBadge.vue'
+import { socialPostStatusOptions } from '@/config/formOptions'
 
 defineProps<{
   post: SocialPostRecord
@@ -16,23 +17,6 @@ const emit = defineEmits<{
   remove: [postId: string]
   statusChange: [post: SocialPostRecord, status: SocialPostRecord['status']]
 }>()
-
-const statusOptions: Array<{ label: string; value: SocialPostRecord['status'] }> = [
-  { label: 'draft', value: 'draft' },
-  { label: 'ready', value: 'ready' },
-  { label: 'posted', value: 'posted' },
-]
-
-function statusTone(status: SocialPostRecord['status']) {
-  switch (status) {
-    case 'draft':
-      return 'default'
-    case 'ready':
-      return 'warning'
-    case 'posted':
-      return 'success'
-  }
-}
 </script>
 
 <template>
@@ -43,9 +27,7 @@ function statusTone(status: SocialPostRecord['status']) {
         <h2 class="mt-1 text-lg font-black text-(--app-text)">{{ post.title }}</h2>
       </div>
 
-      <AppBadge :tone="statusTone(post.status)">
-        {{ post.status }}
-      </AppBadge>
+      <SocialPostStatusBadge :status="post.status" />
     </div>
 
     <p v-if="post.body" class="text-sm leading-6 text-(--app-text-muted)">
@@ -55,7 +37,7 @@ function statusTone(status: SocialPostRecord['status']) {
     <div class="flex flex-wrap items-center gap-3">
       <AppSelect
         :model-value="post.status"
-        :options="statusOptions"
+        :options="socialPostStatusOptions"
         class="max-w-40"
         :disabled="updating"
         @update:model-value="emit('statusChange', post, $event as SocialPostRecord['status'])"

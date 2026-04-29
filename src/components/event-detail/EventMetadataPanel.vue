@@ -1,41 +1,12 @@
 <script setup lang="ts">
-import type { EventRecord, EventStatus } from '@/composables/useEvents'
+import type { EventRecord } from '@/composables/useEvents'
 import AppPanel from '../ui/AppPanel.vue'
-import AppBadge from '../ui/AppBadge.vue'
+import EventStatusBadge from '../events/EventStatusBadge.vue'
+import AppPanelHeader from '../ui/AppPanelHeader.vue'
 
 defineProps<{
   event: EventRecord
 }>()
-
-function statusLabel(status: EventStatus) {
-  switch (status) {
-    case 'draft':
-      return 'Draft'
-    case 'active':
-      return 'Active'
-    case 'closed':
-      return 'Closed'
-    case 'archived':
-      return 'Archived'
-    case 'pending_destruction':
-      return 'Pending destruction'
-  }
-}
-
-function statusTone(status: EventStatus) {
-  switch (status) {
-    case 'active':
-      return 'success'
-    case 'pending_destruction':
-      return 'danger'
-    case 'closed':
-      return 'warning'
-    case 'archived':
-      return 'default'
-    case 'draft':
-      return 'accent'
-  }
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -47,18 +18,13 @@ function formatDate(value: string) {
 
 <template>
   <AppPanel tone="muted" class="space-y-6">
-    <div>
-      <p class="section-label">Metadata</p>
-      <h2 class="mt-2 text-2xl font-black text-(--app-text)">Overview</h2>
-    </div>
+    <AppPanelHeader eyebrow="Metadata" title="Overview" />
 
     <div class="meta-grid">
       <div class="meta-row">
         <span class="meta-label">Status</span>
         <span class="meta-value">
-          <AppBadge :tone="statusTone(event.status)">
-            {{ statusLabel(event.status) }}
-          </AppBadge>
+          <EventStatusBadge :status="event.status" />
         </span>
       </div>
 

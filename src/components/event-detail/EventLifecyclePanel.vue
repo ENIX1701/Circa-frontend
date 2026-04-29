@@ -4,6 +4,7 @@ import AppAlert from '../ui/AppAlert.vue'
 import AppPanel from '../ui/AppPanel.vue'
 import type { EventRecord, EventStatus } from '@/composables/useEvents'
 import AppButton from '../ui/AppButton.vue'
+import AppPanelHeader from '../ui/AppPanelHeader.vue'
 
 const props = defineProps<{
   event: EventRecord
@@ -53,13 +54,11 @@ function statusLabel(status: EventStatus) {
 
 <template>
   <AppPanel class="space-y-6">
-    <div>
-      <p class="section-label">Lifecycle</p>
-      <h2 class="mt-2 text-2xl font-black text-(--app-text)">{{ statusLabel(event.status) }}</h2>
-      <p class="mt-2 text-sm leading-6 text-(--app-text-muted)">
-        Owners can manage the event's lifecycle :3
-      </p>
-    </div>
+    <AppPanelHeader
+      eyebrow="Lifecycle"
+      :title="statusLabel(event.status)"
+      description="Owners can manage the event's lifecycle :3"
+    />
 
     <div class="space-y-3">
       <AppButton

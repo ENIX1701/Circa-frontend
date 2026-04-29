@@ -12,6 +12,7 @@ import AppSelect from '../ui/AppSelect.vue'
 import ColorField from '../ui/ColorField.vue'
 import AppTextarea from '../ui/AppTextarea.vue'
 import AppButton from '../ui/AppButton.vue'
+import { plannerTimelineStatusOptions, plannerTimelineTypeOptions } from '@/config/formOptions'
 
 export interface TimelineItemFormPayload {
   title: string
@@ -47,19 +48,6 @@ const form = reactive<TimelineItemFormPayload>({
   notes: '',
   assigned_user_id: '',
 })
-
-const typeOptions: Array<{ label: string; value: PlannerTimelineItemType }> = [
-  { label: 'task', value: 'task' },
-  { label: 'asset', value: 'asset' },
-  { label: 'milestone', value: 'milestone' },
-]
-
-const statusOptions: Array<{ label: string; value: PlannerTimelineStatus }> = [
-  { label: 'planned', value: 'planned' },
-  { label: 'in progress', value: 'in_progress' },
-  { label: 'blocked', value: 'blocked' },
-  { label: 'done', value: 'done' },
-]
 
 function pad(value: number) {
   return String(value).padStart(2, '0')
@@ -133,7 +121,11 @@ function handleSubmit() {
       </AppField>
 
       <AppField label="Type">
-        <AppSelect v-model="form.item_type" :options="typeOptions" :disabled="loading" />
+        <AppSelect
+          v-model="form.item_type"
+          :options="plannerTimelineTypeOptions"
+          :disabled="loading"
+        />
       </AppField>
     </div>
 
@@ -149,7 +141,11 @@ function handleSubmit() {
 
     <div class="grid gap-5 md:grid-cols-2">
       <AppField label="Status">
-        <AppSelect v-model="form.status" :options="statusOptions" :disabled="loading" />
+        <AppSelect
+          v-model="form.status"
+          :options="plannerTimelineStatusOptions"
+          :disabled="loading"
+        />
       </AppField>
 
       <AppField label="Owner">

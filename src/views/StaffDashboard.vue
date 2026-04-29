@@ -5,6 +5,7 @@ import AppAlert from '@/components/ui/AppAlert.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import AppPanel from '@/components/ui/AppPanel.vue'
+import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
 import AppStatCard from '@/components/ui/AppStatCard.vue'
 import {
   useEvents,
@@ -101,10 +102,7 @@ watch(
     </div>
 
     <AppPanel tone="muted" class="space-y-6">
-      <div>
-        <p class="section-label">Assignments</p>
-        <h2 class="mt-2 text-2xl font-black text-(--app-text)">Team workload</h2>
-      </div>
+      <AppPanelHeader eyebrow="Assignments" title="Team workload" />
 
       <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading staff...</div>
 

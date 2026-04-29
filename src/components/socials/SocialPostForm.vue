@@ -6,6 +6,7 @@ import AppTextarea from '../ui/AppTextarea.vue'
 import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
 import AppInput from '../ui/AppInput.vue'
+import { socialPostStatusOptions } from '@/config/formOptions'
 
 const props = defineProps<{
   post?: SocialPostRecord
@@ -31,12 +32,6 @@ const form = reactive({
   body: '',
   status: 'draft' as SocialPostRecord['status'],
 })
-
-const statusOptions: Array<{ label: string; value: SocialPostRecord['status'] }> = [
-  { label: 'draft', value: 'draft' },
-  { label: 'ready', value: 'ready' },
-  { label: 'posted', value: 'posted' },
-]
 
 watch(
   () => props.post,
@@ -102,7 +97,7 @@ function handleSubmit() {
     </AppField>
 
     <AppField v-if="post" label="Status">
-      <AppSelect v-model="form.status" :options="statusOptions" />
+      <AppSelect v-model="form.status" :options="socialPostStatusOptions" />
     </AppField>
 
     <div class="flex flex-wrap gap-3">

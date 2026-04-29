@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import type { EventRecord, EventStatus } from '@/composables/useEvents'
-import AppBadge from '../ui/AppBadge.vue'
+import type { EventRecord } from '@/composables/useEvents'
+import EventStatusBadge from '../events/EventStatusBadge.vue'
 
 defineProps<{
   event: EventRecord
@@ -9,36 +9,6 @@ defineProps<{
 const emit = defineEmits<{
   open: [id: string]
 }>()
-
-function statusLabel(status: EventStatus) {
-  switch (status) {
-    case 'draft':
-      return 'Draft'
-    case 'active':
-      return 'Active'
-    case 'closed':
-      return 'Closed'
-    case 'archived':
-      return 'Archived'
-    case 'pending_destruction':
-      return 'Pending destruction'
-  }
-}
-
-function statusTone(status: EventStatus) {
-  switch (status) {
-    case 'active':
-      return 'success'
-    case 'pending_destruction':
-      return 'danger'
-    case 'closed':
-      return 'warning'
-    case 'archived':
-      return 'default'
-    case 'draft':
-      return 'accent'
-  }
-}
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -62,9 +32,7 @@ function formatDate(value: string) {
         </p>
       </div>
 
-      <AppBadge :tone="statusTone(event.status)">
-        {{ statusLabel(event.status) }}
-      </AppBadge>
+      <EventStatusBadge :status="event.status" />
     </div>
 
     <div class="mt-4 space-y-1 text-sm text-(--app-text-muted)">

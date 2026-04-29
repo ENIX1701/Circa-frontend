@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import type { EventCollaboratorRecord, PlannerTimelineItemRecord } from '@/composables/useEvents'
 import AppPanel from '../ui/AppPanel.vue'
-import AppBadge from '../ui/AppBadge.vue'
+import PlannerStatusBadge from '../planner/PlannerStatusBadge.vue'
+import RoleBadge from '../collaborators/RoleBadge.vue'
 
 defineProps<{
   member: EventCollaboratorRecord
@@ -10,19 +11,6 @@ defineProps<{
   blocked: number
   open: number
 }>()
-
-function statusTone(status: PlannerTimelineItemRecord['status']) {
-  switch (status) {
-    case 'planned':
-      return 'default'
-    case 'in_progress':
-      return 'accent'
-    case 'blocked':
-      return 'danger'
-    case 'done':
-      return 'success'
-  }
-}
 
 function formatWindow(item: PlannerTimelineItemRecord) {
   const formatter = new Intl.DateTimeFormat(undefined, {
@@ -41,7 +29,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
     <div class="flex items-start justify-between gap-4">
       <div>
         <h2 class="font-bold text-(--app-text)">{{ member.name }} {{ member.surname }}</h2>
-        <p class="mt-1 text-sm text-(--app-text-muted)">{{ member.role }}</p>
+        <div class="mt-2"><RoleBadge :role="member.role" /></div>
         <p v-if="member.phone" class="mt-1 text-xs text-(--app-text-muted)">{{ member.phone }}</p>
       </div>
 
@@ -66,9 +54,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
             <p class="mt-1 text-xs text-(--app-text-muted)">{{ formatWindow(item) }}</p>
           </div>
 
-          <AppBadge :tone="statusTone(item.status)">
-            {{ item.status }}
-          </AppBadge>
+          <PlannerStatusBadge :status="item.status" />
         </div>
 
         <o class="mt-2 text-xs text-(--app-text-muted)">{{ item.notes }}</o>

@@ -20,11 +20,11 @@ npm run build
   - [ ] logistics
   - [x] socials
 - [x] token storage
-- [ ] role-based views
-  - [ ] admin
-  - [ ] organizer
-  - [ ] staff
-  - [ ] volunteer
+- [x] role-based views -> for now only options, not whole views
+  - ~~[ ] admin~~
+  - ~~[ ] organizer~~
+  - ~~[ ] staff~~
+  - ~~[ ] volunteer~~
 - [ ] typography in branding view
 - [x] slight redesign (ditch the shadows and go for just clean) -> i missed the 'slight' part i think x3
 - [x] dashboard layouts

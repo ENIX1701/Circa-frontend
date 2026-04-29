@@ -50,6 +50,6 @@ describe('staff components', () => {
     })
 
     expect(wrapper.text()).toContain('Build landing stage')
-    expect(wrapper.text()).toContain('in_progress')
+    expect(wrapper.text()).toContain('in progress')
   })
 })
