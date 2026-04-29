@@ -9,6 +9,7 @@ import EventLifecyclePanel from '@/components/event-detail/EventLifecyclePanel.v
 import AppLinkButton from '@/components/ui/AppLinkButton.vue'
 import { ChevronLeft } from 'lucide-vue-next'
 import AppLoadingState from '@/components/ui/AppLoadingState.vue'
+import EventStatusBadge from '@/components/events/EventStatusBadge.vue'
 
 const route = useRoute()
 const {
@@ -98,9 +99,10 @@ watch(
 
 <template>
   <div class="space-y-8">
-    <AppLinkButton to="/events" variant="ghost" size="sm"
-      ><ChevronLeft class="h-4 w-4" aria-hidden="true" /> Back to events</AppLinkButton
-    >
+    <AppLinkButton to="/events" variant="ghost" size="sm">
+      <ChevronLeft class="h-4 w-4" aria-hidden="true" />
+      Back to events
+    </AppLinkButton>
 
     <AppLoadingState v-if="loading" label="Loading event details..." />
 
@@ -110,10 +112,9 @@ watch(
       <AppPageHeader
         eyebrow="Event details"
         :title="event.name"
-        :description="event.description || 'No description yet :c'"
-      />
+        :description="event.description || 'No description yet :c'" />
 
-      <div class="grid gap-8 grid-cols-2">
+      <div class="grid gap-8 lg:grid-cols-2">
         <EventMetadataPanel :event="event" />
 
         <EventLifecyclePanel
