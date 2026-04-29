@@ -13,6 +13,7 @@ import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import AppAlert from '@/components/ui/AppAlert.vue'
 import TimelineBoard from '@/components/planner/TimelineBoard.vue'
 import TimelineItemList from '@/components/planner/TimelineItemList.vue'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 
@@ -23,6 +24,7 @@ const {
   updatePlannerTimelineItem,
   deletePlannerTimelineItem,
 } = useEvents()
+const { pushToast } = useToast()
 
 const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
 
@@ -61,6 +63,15 @@ function toRfc3339Date(date: Date) {
     `T${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`,
     `${sign}${offsetHours}:${offsetRemainder}`,
   ].join('')
+}
+
+function formatStatus(status: PlannerTimelineStatus) {
+  return status.replace(/_/g, ' ')
+}
+
+function formatDays(days: number) {
+  const count = Math.abs(days)
+  return `${count} day${count === 1 ? '' : 's'}`
 }
 
 async function loadTimelineItems() {
@@ -110,6 +121,12 @@ async function handleCreateTimelineItem(payload: TimelineItemFormPayload) {
     const created = await createPlannerTimelineItem(eventId.value, payloadToRequest(payload))
 
     timelineItems.value = [...timelineItems.value, created].sort((a, b) => a.position - b.position)
+
+    pushToast({
+      tone: 'success',
+      title: 'Timeline item created',
+      description: `${created.title} was added to the planner`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to create planner timeline item'
   } finally {
@@ -128,9 +145,13 @@ async function handleTimelineStatusChange(
 
   try {
     const updated = await updatePlannerTimelineItem(eventId.value, item.id, { status })
-    timelineItems.value = timelineItems.value.map((current) =>
-      current.id === updated.id ? updated : current,
-    )
+    replaceTimelineItem(updated)
+
+    pushToast({
+      tone: 'success',
+      title: 'Status updated',
+      description: `${updated.title} is now ${formatStatus(updated.status)}`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to update timeline item'
   } finally {
@@ -156,6 +177,12 @@ async function handleTimelineItemSave(
     replaceTimelineItem(updated)
     editingTimelineItemId.value = ''
     editingScheduledItemId.value = ''
+
+    pushToast({
+      tone: 'success',
+      title: 'Timeline item updated',
+      description: `${updated.title} has been updated`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to update timeline item'
   } finally {
@@ -182,6 +209,12 @@ async function shiftTimelineItem(item: PlannerTimelineItemRecord, days: number) 
     })
 
     replaceTimelineItem(updated)
+
+    pushToast({
+      tone: 'success',
+      title: 'Timeline item moved',
+      description: `${updated.title} was moved ${formatDays(days)}`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to move timeline item'
   } finally {
@@ -201,6 +234,12 @@ async function extendTimelineItem(item: PlannerTimelineItemRecord, days: number)
     })
 
     replaceTimelineItem(updated)
+
+    pushToast({
+      tone: 'success',
+      title: 'Timeline item extended',
+      description: `${updated.title} was extended by ${formatDays(days)}`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to resize timeline item'
   } finally {
@@ -215,8 +254,17 @@ async function removeTimelineItem(itemId: string) {
   error.value = ''
 
   try {
+    const itemTitle =
+      timelineItems.value.find((item) => item.id === itemId)?.title ?? 'Timeline item'
+
     await deletePlannerTimelineItem(eventId.value, itemId)
     timelineItems.value = timelineItems.value.filter((item) => item.id !== itemId)
+
+    pushToast({
+      tone: 'success',
+      title: 'Timeline item removed',
+      description: `${itemTitle} was removed from the planner`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to delete timeline item'
   } finally {

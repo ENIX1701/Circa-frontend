@@ -12,11 +12,13 @@ import {
   type SocialPostRecord,
   useEvents,
 } from '@/composables/useEvents'
+import { useToast } from '@/composables/useToast'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
 const { listSocialPosts, createSocialPost, updateSocialPost, deleteSocialPost } = useEvents()
+const { pushToast } = useToast()
 
 const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
 
@@ -67,6 +69,12 @@ async function handleCreatePost(payload: CreateSocialPostRequest) {
   try {
     const created = await createSocialPost(eventId.value, payload)
     posts.value = [...posts.value, created].sort((a, b) => a.position - b.position)
+
+    pushToast({
+      tone: 'success',
+      title: 'Post created',
+      description: `${created.title} was added to the draft queue`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to create social post'
   } finally {
@@ -97,6 +105,12 @@ async function handleUpdatePost(payload: {
     const updated = await updateSocialPost(eventId.value, editingPost.value.id, payload)
     replacePost(updated)
     editingPostId.value = ''
+
+    pushToast({
+      tone: 'success',
+      title: 'Post updated',
+      description: `${updated.title} has been updated`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to update social post'
   } finally {
@@ -115,6 +129,12 @@ async function handleStatusChange(post: SocialPostRecord, status: SocialPostReco
   try {
     const updated = await updateSocialPost(eventId.value, post.id, { status })
     replacePost(updated)
+
+    pushToast({
+      tone: 'success',
+      title: 'Post status updated',
+      description: `${updated.title} is now ${updated.status} :3`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to update social post'
   } finally {
@@ -131,8 +151,16 @@ async function removePost(postId: string) {
   error.value = ''
 
   try {
+    const postTitle = posts.value.find((post) => post.id === postId)?.title ?? 'Post'
+
     await deleteSocialPost(eventId.value, postId)
     posts.value = posts.value.filter((post) => post.id !== postId)
+
+    pushToast({
+      tone: 'success',
+      title: 'Post removed',
+      description: `${postTitle} was removed from the draft queue`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to delete social post'
   } finally {

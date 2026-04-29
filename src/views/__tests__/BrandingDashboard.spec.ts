@@ -11,6 +11,7 @@ const routeMock: { params: Record<string, string | undefined> } = {
 
 const getEventBrandingMock = vi.fn()
 const upsertEventBrandingMock = vi.fn()
+const pushToastMock = vi.fn()
 
 vi.mock('vue-router', () => ({
   useRoute: () => routeMock,
@@ -20,6 +21,12 @@ vi.mock('@/composables/useEvents', () => ({
   useEvents: () => ({
     getEventBranding: getEventBrandingMock,
     upsertEventBranding: upsertEventBrandingMock,
+  }),
+}))
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({
+    pushToast: pushToastMock,
   }),
 }))
 
@@ -43,6 +50,7 @@ describe('BrandingDashboard.vue', () => {
     routeMock.params = { id: 'evt-1' }
     getEventBrandingMock.mockReset().mockResolvedValue(loadedBranding)
     upsertEventBrandingMock.mockReset()
+    pushToastMock.mockReset()
   })
 
   it('loads branding and renders the form and preview', async () => {
@@ -78,7 +86,11 @@ describe('BrandingDashboard.vue', () => {
       background_color: '#ffffff',
       notes: 'Notes',
     })
-    expect(wrapper.text()).toContain('Branding saved')
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Branding saved',
+      description: 'Your event branding has been updated.',
+    })
     expect(brandingEvents[0]!.detail).toEqual({ eventId: 'evt-1', branding: saved })
   })
 

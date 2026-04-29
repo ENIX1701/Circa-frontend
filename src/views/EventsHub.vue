@@ -10,9 +10,11 @@ import AppEmptyState from '@/components/ui/AppEmptyState.vue'
 import EventCard from '@/components/events/EventCard.vue'
 import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
 import AppLoadingState from '@/components/ui/AppLoadingState.vue'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const { listEvents, createEvent } = useEvents()
+const { pushToast } = useToast()
 
 const loading = ref(true)
 const creating = ref(false)
@@ -38,6 +40,12 @@ async function handleCreateEvent(payload: CreateEventRequest) {
 
   try {
     const created = await createEvent(payload)
+
+    pushToast({
+      tone: 'success',
+      title: 'Event created',
+      description: `${created.name} is ready to plan :3`,
+    })
     router.push({ name: 'event-detail', params: { id: created.id } })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to create event QwQ'

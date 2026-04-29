@@ -12,6 +12,7 @@ import {
   type EventMembershipRole,
   useEvents,
 } from '@/composables/useEvents'
+import { useToast } from '@/composables/useToast'
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
@@ -24,6 +25,7 @@ const {
   updateEventCollaborator,
   deleteEventCollaborator,
 } = useEvents()
+const { pushToast } = useToast()
 
 const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
 
@@ -75,6 +77,12 @@ async function handleAddCollaborator(payload: AddEventCollaboratorRequest) {
       ...collaborators.value.filter((member) => member.user_id !== created.user_id),
       created,
     ]
+
+    pushToast({
+      tone: 'success',
+      title: 'Collaborator added',
+      description: `${created.name} ${created.surname} can now access this event.`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to add collaborator'
   } finally {
@@ -93,6 +101,12 @@ async function handleRoleChange(member: EventCollaboratorRecord, role: EventMemb
     collaborators.value = collaborators.value.map((current) =>
       current.user_id === updated.user_id ? updated : current,
     )
+
+    pushToast({
+      tone: 'success',
+      title: 'Role updated',
+      description: `${updated.name} ${updated.surname} is now ${updated.role}.`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to update collaborator'
   } finally {
@@ -111,6 +125,12 @@ async function handleRemoveCollaborator(member: EventCollaboratorRecord) {
     collaborators.value = collaborators.value.filter(
       (current) => current.user_id !== member.user_id,
     )
+
+    pushToast({
+      tone: 'success',
+      title: 'Collaborator removed',
+      description: `${member.name} ${member.surname} no longer has access :c`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to remove collaborator'
   } finally {

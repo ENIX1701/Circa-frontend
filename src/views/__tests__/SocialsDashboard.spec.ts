@@ -13,6 +13,7 @@ const listSocialPostsMock = vi.fn()
 const createSocialPostMock = vi.fn()
 const updateSocialPostMock = vi.fn()
 const deleteSocialPostMock = vi.fn()
+const pushToastMock = vi.fn()
 
 vi.mock('vue-router', () => ({
   useRoute: () => routeMock,
@@ -27,6 +28,12 @@ vi.mock('@/composables/useEvents', () => ({
   }),
 }))
 
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({
+    pushToast: pushToastMock,
+  }),
+}))
+
 const post = socialPostFactory()
 
 describe('SocialsDashboard.vue', () => {
@@ -36,6 +43,7 @@ describe('SocialsDashboard.vue', () => {
     createSocialPostMock.mockReset()
     updateSocialPostMock.mockReset()
     deleteSocialPostMock.mockReset()
+    pushToastMock.mockReset()
   })
 
   it('loads social posts on mount', async () => {
@@ -64,6 +72,11 @@ describe('SocialsDashboard.vue', () => {
     expect(createSocialPostMock).toHaveBeenCalledWith('evt-1', {
       platform: 'LinkedIn',
       title: 'Second post',
+    })
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Post created',
+      description: 'Second post was added to the draft queue.',
     })
     expect(wrapper.text()).toContain('Second post')
 
@@ -96,6 +109,11 @@ describe('SocialsDashboard.vue', () => {
     wrapper.findComponent(SocialPostCard).vm.$emit('remove', 'post-1')
     await flushPromises()
     expect(deleteSocialPostMock).toHaveBeenCalledWith('evt-1', 'post-1')
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Post removed',
+      description: 'Launch teaser was removed from the draft queue.',
+    })
     expect(wrapper.text()).not.toContain('Launch teaser')
   })
 

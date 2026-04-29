@@ -6,10 +6,13 @@ const routeMock: { params: Record<string, string> } = {
 }
 
 const getEventMock = vi.fn()
+const getEventExportMock = vi.fn()
 const activateEventMock = vi.fn()
 const closeEventMock = vi.fn()
 const requestDestructionMock = vi.fn()
 const cancelDestructionMock = vi.fn()
+const archiveEventMock = vi.fn()
+const pushToastMock = vi.fn()
 
 vi.mock('vue-router', () => ({
   useRoute: () => routeMock,
@@ -18,10 +21,18 @@ vi.mock('vue-router', () => ({
 vi.mock('@/composables/useEvents', () => ({
   useEvents: () => ({
     getEvent: getEventMock,
+    getEventExport: getEventExportMock,
     activateEvent: activateEventMock,
     closeEvent: closeEventMock,
     requestDestruction: requestDestructionMock,
     cancelDestruction: cancelDestructionMock,
+    archiveEvent: archiveEventMock,
+  }),
+}))
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({
+    pushToast: pushToastMock,
   }),
 }))
 
@@ -62,10 +73,13 @@ describe('EventDetail.vue', () => {
   beforeEach(() => {
     routeMock.params = { id: 'evt-1' }
     getEventMock.mockReset()
+    getEventExportMock.mockReset()
     activateEventMock.mockReset()
     closeEventMock.mockReset()
     requestDestructionMock.mockReset()
     cancelDestructionMock.mockReset()
+    archiveEventMock.mockReset()
+    pushToastMock.mockReset()
   })
 
   it('loads the event detail on mount', async () => {
@@ -95,6 +109,11 @@ describe('EventDetail.vue', () => {
     await flushPromises()
 
     expect(activateEventMock).toHaveBeenCalledWith('evt-1')
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Event activated',
+      description: 'Spring Summit is now active.',
+    })
     expect(wrapper.text()).toContain('Active')
   })
 })

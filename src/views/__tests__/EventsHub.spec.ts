@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { flushPromises, mount } from '@vue/test-utils'
 
 const pushMock = vi.fn()
+const pushToastMock = vi.fn()
 const listEventsMock = vi.fn()
 const createEventMock = vi.fn()
 
@@ -15,6 +16,12 @@ vi.mock('@/composables/useEvents', () => ({
   useEvents: () => ({
     listEvents: listEventsMock,
     createEvent: createEventMock,
+  }),
+}))
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({
+    pushToast: pushToastMock,
   }),
 }))
 
@@ -44,6 +51,7 @@ function mountHub() {
 describe('EventsHub.vue', () => {
   beforeEach(() => {
     pushMock.mockReset()
+    pushToastMock.mockReset()
     listEventsMock.mockReset()
     createEventMock.mockReset()
   })
@@ -92,6 +100,11 @@ describe('EventsHub.vue', () => {
       /^2026-05-16T18:00:00[+-]\d{2}:\d{2}$/,
     )
 
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Event created',
+      description: 'Spring Summit is ready to plan.',
+    })
     expect(pushMock).toHaveBeenCalledWith({
       name: 'event-detail',
       params: { id: 'evt-1' },

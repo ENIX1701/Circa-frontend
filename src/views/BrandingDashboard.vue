@@ -13,6 +13,7 @@ import BrandingForm from '@/components/branding/BrandingForm.vue'
 import BrandingPreview from '@/components/branding/BrandingPreview.vue'
 import TypographyPreview from '@/components/branding/TypographyPreview.vue'
 import AppLoadingState from '@/components/ui/AppLoadingState.vue'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const { getEventBranding, upsertEventBranding } = useEvents()
@@ -22,7 +23,6 @@ const eventId = computed(() => (typeof route.params.id === 'string' ? route.para
 const loading = ref(true)
 const saving = ref(false)
 const error = ref('')
-const saved = ref(false)
 
 const form = reactive<UpsertEventBrandingRequest>({
   event_name_override: '',
@@ -56,7 +56,6 @@ async function loadBranding() {
 
   loading.value = true
   error.value = ''
-  saved.value = false
 
   try {
     const branding = await getEventBranding(eventId.value)
@@ -68,6 +67,8 @@ async function loadBranding() {
   }
 }
 
+const { pushToast } = useToast()
+
 async function handleSave() {
   if (!eventId.value) {
     return
@@ -75,7 +76,6 @@ async function handleSave() {
 
   saving.value = true
   error.value = ''
-  saved.value = false
 
   try {
     const branding = await upsertEventBranding(eventId.value, {
@@ -89,7 +89,6 @@ async function handleSave() {
     })
 
     applyBranding(branding)
-    saved.value = true
 
     window.dispatchEvent(
       new CustomEvent('circa:branding-updated', {
@@ -99,6 +98,12 @@ async function handleSave() {
         },
       }),
     )
+
+    pushToast({
+      tone: 'success',
+      title: 'Branding saved',
+      description: 'Your event branding has been updated :3',
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to save branding :c'
   } finally {
@@ -120,7 +125,6 @@ watch(
     <AppPageHeader eyebrow="branding" title="Branding" description="Give this event a soul!" />
 
     <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
-    <AppAlert v-if="saved" tone="success">Branding saved :3</AppAlert>
 
     <AppPanel v-if="loading">
       <AppLoadingState v-if="loading" label="Loading branding..." />

@@ -6,6 +6,7 @@ import { useEventTheme } from './composables/useEventTheme'
 import DesktopSidebar from '@/components/DesktopSidebar.vue'
 import MobileNavbar from '@/components/MobileNavbar.vue'
 import AppPanel from './components/ui/AppPanel.vue'
+import AppToastHost from './components/ui/AppToastHost.vue'
 
 const route = useRoute()
 const isPublicRoute = computed(() => Boolean(route.meta.public))
@@ -15,6 +16,8 @@ useEventTheme()
 
 <template>
   <div class="app-shell">
+    <AppToastHost />
+
     <main
       v-if="isPublicRoute"
       class="flex min-h-screen items-center justify-center px-6 py-10 md:px-10"

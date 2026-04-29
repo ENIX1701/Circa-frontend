@@ -267,7 +267,7 @@ textarea:disabled {
   font-size: 0.875rem;
 }
 
-.app-nav-item--destop.app-nav-item--active::before {
+.app-nav-item--desktop.app-nav-item--active::before {
   content: '';
   position: absolute;
   left: -1px;

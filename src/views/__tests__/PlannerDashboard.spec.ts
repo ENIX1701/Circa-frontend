@@ -16,6 +16,7 @@ const listPlannerTimelineItemsMock = vi.fn()
 const createPlannerTimelineItemMock = vi.fn()
 const updatePlannerTimelineItemMock = vi.fn()
 const deletePlannerTimelineItemMock = vi.fn()
+const pushToastMock = vi.fn()
 
 vi.mock('vue-router', () => ({
   useRoute: () => routeMock,
@@ -28,6 +29,12 @@ vi.mock('@/composables/useEvents', () => ({
     createPlannerTimelineItem: createPlannerTimelineItemMock,
     updatePlannerTimelineItem: updatePlannerTimelineItemMock,
     deletePlannerTimelineItem: deletePlannerTimelineItemMock,
+  }),
+}))
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({
+    pushToast: pushToastMock,
   }),
 }))
 
@@ -58,6 +65,7 @@ describe('PlannerDashboard.vue', () => {
     createPlannerTimelineItemMock.mockReset()
     updatePlannerTimelineItemMock.mockReset()
     deletePlannerTimelineItemMock.mockReset()
+    pushToastMock.mockReset()
   })
 
   it('loads timeline items and collaborators on mount', async () => {
@@ -93,6 +101,11 @@ describe('PlannerDashboard.vue', () => {
     )
     const payload = createPlannerTimelineItemMock.mock.calls[0]![1]
     expect(payload.starts_at).toMatch(/^2026-05-15T09:00:00[+-]\d{2}:\d{2}$/)
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Timeline item created',
+      description: 'Build stage was added to the planner.',
+    })
     expect(wrapper.text()).toContain('Build stage')
   })
 
@@ -135,6 +148,11 @@ describe('PlannerDashboard.vue', () => {
     wrapper.findComponent(TimelineItemList).vm.$emit('remove', 'tl-1')
     await flushPromises()
     expect(deletePlannerTimelineItemMock).toHaveBeenCalledWith('evt-1', 'tl-1')
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Timeline item removed',
+      description: 'Build landing stage was removed from the planner.',
+    })
     expect(wrapper.text()).not.toContain('Build landing stage')
   })
 

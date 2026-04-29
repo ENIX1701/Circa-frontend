@@ -14,6 +14,7 @@ const listEventCollaboratorsMock = vi.fn()
 const addEventCollaboratorMock = vi.fn()
 const updateEventCollaboratorMock = vi.fn()
 const deleteEventCollaboratorMock = vi.fn()
+const pushToastMock = vi.fn()
 
 vi.mock('vue-router', () => ({
   useRoute: () => routeMock,
@@ -26,6 +27,12 @@ vi.mock('@/composables/useEvents', () => ({
     addEventCollaborator: addEventCollaboratorMock,
     updateEventCollaborator: updateEventCollaboratorMock,
     deleteEventCollaborator: deleteEventCollaboratorMock,
+  }),
+}))
+
+vi.mock('@/composables/useToast', () => ({
+  useToast: () => ({
+    pushToast: pushToastMock,
   }),
 }))
 
@@ -47,6 +54,7 @@ describe('CollaboratorsDashboard.vue', () => {
     addEventCollaboratorMock.mockReset()
     updateEventCollaboratorMock.mockReset()
     deleteEventCollaboratorMock.mockReset()
+    pushToastMock.mockReset()
   })
 
   it('loads collaborators and enables management for owners', async () => {
@@ -73,6 +81,11 @@ describe('CollaboratorsDashboard.vue', () => {
     })
     await flushPromises()
     expect(wrapper.text()).toContain('Grace Hopper')
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Collaborator added',
+      description: 'Grace Hopper can now access this event.',
+    })
 
     const graceRow = wrapper
       .findAllComponents(CollaboratorRow)
@@ -87,6 +100,11 @@ describe('CollaboratorsDashboard.vue', () => {
     graceRow?.vm.$emit('remove', { ...grace, role: 'organizer' })
     await flushPromises()
     expect(deleteEventCollaboratorMock).toHaveBeenCalledWith('evt-1', 'user-2')
+    expect(pushToastMock).toHaveBeenCalledWith({
+      tone: 'success',
+      title: 'Collaborator removed',
+      description: 'Grace Hopper no longer has access.',
+    })
     expect(wrapper.text()).not.toContain('Grace Hopper')
   })
 

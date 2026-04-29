@@ -9,7 +9,7 @@ import EventLifecyclePanel from '@/components/event-detail/EventLifecyclePanel.v
 import AppLinkButton from '@/components/ui/AppLinkButton.vue'
 import { ChevronLeft } from 'lucide-vue-next'
 import AppLoadingState from '@/components/ui/AppLoadingState.vue'
-import EventStatusBadge from '@/components/events/EventStatusBadge.vue'
+import { useToast } from '@/composables/useToast'
 
 const route = useRoute()
 const {
@@ -21,6 +21,7 @@ const {
   requestDestruction,
   cancelDestruction,
 } = useEvents()
+const { pushToast } = useToast()
 
 const loading = ref(true)
 const saving = ref(false)
@@ -29,6 +30,10 @@ const event = ref<EventRecord | null>(null)
 const exporting = ref(false)
 
 const eventId = computed(() => String(route.params.id ?? ''))
+
+function formatStatus(status: EventRecord['status']) {
+  return status.replace(/_/g, ' ')
+}
 
 async function loadEvent() {
   loading.value = true
@@ -46,6 +51,8 @@ async function loadEvent() {
 async function handleLifecycleAction(
   action: (id: string) => Promise<EventRecord>,
   fallbackMessage: string,
+  successTitle: string,
+  tone: 'success' | 'info' = 'success',
 ) {
   if (!event.value) return
 
@@ -53,7 +60,14 @@ async function handleLifecycleAction(
   error.value = ''
 
   try {
-    event.value = await action(event.value.id)
+    const updated = await action(event.value.id)
+    event.value = updated
+
+    pushToast({
+      tone,
+      title: successTitle,
+      description: `${updated.name} is now ${formatStatus(updated.status)}.`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : fallbackMessage
   } finally {
@@ -62,22 +76,30 @@ async function handleLifecycleAction(
 }
 
 async function handleExport() {
-  if (!event.value) return
+  const currentEvent = event.value
+  if (!currentEvent) return
 
   exporting.value = true
   error.value = ''
 
   try {
-    const payload = await getEventExport(event.value.id)
+    const payload = await getEventExport(currentEvent.id)
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
+    const fileName = `${currentEvent.slug}-export.json`
 
     link.href = url
-    link.download = `${event.value.slug}-export.json`
+    link.download = fileName
     link.click()
 
     URL.revokeObjectURL(url)
+
+    pushToast({
+      tone: 'success',
+      title: 'Export downloaded',
+      description: `${fileName} has been created`,
+    })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to export event'
   } finally {
@@ -112,7 +134,8 @@ watch(
       <AppPageHeader
         eyebrow="Event details"
         :title="event.name"
-        :description="event.description || 'No description yet :c'" />
+        :description="event.description || 'No description yet :c'"
+      />
 
       <div class="grid gap-8 lg:grid-cols-2">
         <EventMetadataPanel :event="event" />
@@ -121,15 +144,28 @@ watch(
           :event="event"
           :saving="saving"
           :exporting="exporting"
-          @activate="handleLifecycleAction(activateEvent, 'Failed to activate event')"
-          @close="handleLifecycleAction(closeEvent, 'Failed to close event')"
+          @activate="
+            handleLifecycleAction(activateEvent, 'Failed to activate event', 'Event activated')
+          "
+          @close="handleLifecycleAction(closeEvent, 'Failed to close event', 'Event closed')"
           @request-destruction="
-            handleLifecycleAction(requestDestruction, 'Failed to request destruction')
+            handleLifecycleAction(
+              requestDestruction,
+              'Failed to request destruction',
+              'Destruction requested',
+              'info',
+            )
           "
           @cancel-destruction="
-            handleLifecycleAction(cancelDestruction, 'Failed to cancel destruction')
+            handleLifecycleAction(
+              cancelDestruction,
+              'Failed to cancel destruction',
+              'Destruction cancelled',
+            )
           "
-          @archive="handleLifecycleAction(archiveEvent, 'Failed to archive event')"
+          @archive="
+            handleLifecycleAction(archiveEvent, 'Failed to archive event', 'Event archived')
+          "
           @export="handleExport"
         />
       </div>
