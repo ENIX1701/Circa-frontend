@@ -5,6 +5,7 @@ import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
 import SocialPostStatusBadge from './SocialPostStatusBadge.vue'
 import { socialPostStatusOptions } from '@/config/formOptions'
+import { Edit2, Trash2 } from 'lucide-vue-next'
 
 defineProps<{
   post: SocialPostRecord
@@ -44,6 +45,7 @@ const emit = defineEmits<{
       />
 
       <AppButton type="button" variant="ghost" size="sm" @click="emit('edit', post)">
+        <Edit2 class="h-4 w-4" aria-hidden="true" />
         Edit
       </AppButton>
 
@@ -54,6 +56,7 @@ const emit = defineEmits<{
         :loading="deleting"
         @click="emit('remove', post.id)"
       >
+        <Trash2 class="h-4 w-4" aria-hidden="true" />
         {{ deleting ? 'Removing...' : 'Remove' }}
       </AppButton>
     </div>

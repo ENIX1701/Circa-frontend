@@ -9,6 +9,7 @@ import AppButton from '../ui/AppButton.vue'
 import AppSurface from '../ui/AppSurface.vue'
 import AppPanelHeader from '../ui/AppPanelHeader.vue'
 import AppLoadingState from '../ui/AppLoadingState.vue'
+import { Edit2, Trash2 } from 'lucide-vue-next'
 
 defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -90,6 +91,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
               />
 
               <AppButton type="button" variant="ghost" size="sm" @click="emit('edit', item)">
+                <Edit2 class="h-4 w-4" aria-hidden="true" />
                 Edit
               </AppButton>
 
@@ -100,6 +102,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
                 :loading="deletingItemId === item.id"
                 @click="emit('remove', item.id)"
               >
+                <Trash2 class="h-4 w-4" aria-hidden="true" />
                 Remove
               </AppButton>
             </div>
