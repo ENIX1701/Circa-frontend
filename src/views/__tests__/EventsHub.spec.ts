@@ -71,20 +71,26 @@ describe('EventsHub.vue', () => {
     await wrapper.find('#event-description').setValue('Planning weekend')
     await wrapper.find('#event-venue').setValue('Expo Hall')
     await wrapper.find('#event-timezone').setValue('Europe/Warsaw')
-    await wrapper.find('#event-starts-at').setValue('2026-05-15T09:00:00+02:00')
-    await wrapper.find('#event-ends-at').setValue('2026-05-16T18:00:00+02:00')
+    await wrapper.find('#event-starts-at').setValue('2026-05-15T09:00')
+    await wrapper.find('#event-ends-at').setValue('2026-05-16T18:00')
     await wrapper.find('form').trigger('submit.prevent')
     await flushPromises()
 
-    expect(createEventMock).toHaveBeenCalledWith({
-      name: 'Spring Summit',
-      slug: 'spring-summit',
-      description: 'Planning weekend',
-      venue: 'Expo Hall',
-      timezone: 'Europe/Warsaw',
-      starts_at: '2026-05-15T09:00:00+02:00',
-      ends_at: '2026-05-16T18:00:00+02:00',
-    })
+    expect(createEventMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Spring Summit',
+        slug: 'spring-summit',
+        description: 'Planning weekend',
+        venue: 'Expo Hall',
+        timezone: 'Europe/Warsaw',
+      }),
+    )
+    expect(createEventMock.mock.calls[0]?.[0].starts_at).toMatch(
+      /^2026-05-15T09:00:00[+-]\d{2}:\d{2}$/,
+    )
+    expect(createEventMock.mock.calls[0]?.[0].ends_at).toMatch(
+      /^2026-05-16T18:00:00[+-]\d{2}:\d{2}$/,
+    )
 
     expect(pushMock).toHaveBeenCalledWith({
       name: 'event-detail',

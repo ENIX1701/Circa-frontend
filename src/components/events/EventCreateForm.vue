@@ -33,20 +33,22 @@ function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
-    .replace(/[^a-z0-9\\s-]/g, '')
-    .replace(/\\s+/g, '-')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 }
 
-function handleNameInput() {
+function handleNameInput(value: string | number) {
+  form.name = String(value)
+
   if (!slugTouched.value) {
     form.slug = slugify(form.name)
   }
 }
 
-function handleSlugInput() {
+function handleSlugInput(value: string | number) {
   slugTouched.value = true
-  form.slug = slugify(form.slug)
+  form.slug = slugify(String(value))
 }
 
 function resetForm() {
@@ -125,7 +127,7 @@ defineExpose({ resetForm })
         v-model="form.name"
         type="text"
         placeholder="Windows 95 launch"
-        @input="handleNameInput"
+        @update:model-value="handleNameInput"
       />
     </AppField>
 
@@ -135,7 +137,7 @@ defineExpose({ resetForm })
         v-model="form.slug"
         type="text"
         placeholder="windows-95-launch"
-        @input="handleSlugInput"
+        @update:model-value="handleSlugInput"
       />
     </AppField>
 

@@ -72,7 +72,7 @@ onMounted(async () => {
     <div class="space-y-2">
       <p class="section-label">Tester tools</p>
       <h1 class="text-3xl font-bold tracking-tight">Dev inbox</h1>
-      <p class="text-sm text-[var(--color-text-muted)]">
+      <p class="text-sm text-(--color-text-muted)">
         Find the latest valid magic link for a tester email when SMTP is disabled.
       </p>
     </div>
@@ -80,10 +80,7 @@ onMounted(async () => {
     <div class="glass-panel p-5">
       <div class="space-y-4">
         <div class="space-y-2">
-          <label
-            for="test-inbox-email"
-            class="block text-sm font-medium text-[var(--color-text-muted)]"
-          >
+          <label for="test-inbox-email" class="block text-sm font-medium text-(--color-text-muted)">
             Email
           </label>
           <input
@@ -131,14 +128,14 @@ onMounted(async () => {
 
     <div v-else-if="state === 'empty'" class="glass-panel p-5">
       <p class="section-label">No active link</p>
-      <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+      <p class="mt-2 text-sm text-(--color-text-muted)">
         {{ message || 'No valid magic link was found for this email.' }}
       </p>
     </div>
 
     <div v-else-if="state === 'unavailable'" class="glass-panel p-5">
       <p class="section-label">Unavailable</p>
-      <p class="mt-2 text-sm text-[var(--color-text-muted)]">
+      <p class="mt-2 text-sm text-(--color-text-muted)">
         {{ message || 'The test inbox is not enabled in this environment.' }}
       </p>
     </div>

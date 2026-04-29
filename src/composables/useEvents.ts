@@ -665,7 +665,7 @@ export const useEvents = () => {
     const cached = getCached<EventCollaboratorRecord[]>(collaboratorsPath(eventId))
     if (cached) {
       setCached(collaboratorsPath(eventId), [
-        cached.map((item) => (item.user_id === collaborator.user_id ? collaborator : item)),
+        ...cached.map((item) => (item.user_id === collaborator.user_id ? collaborator : item)),
       ])
     }
 
