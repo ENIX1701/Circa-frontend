@@ -5,6 +5,7 @@ import AppPanel from '../ui/AppPanel.vue'
 import type { EventRecord, EventStatus } from '@/composables/useEvents'
 import AppButton from '../ui/AppButton.vue'
 import AppPanelHeader from '../ui/AppPanelHeader.vue'
+import { Archive, Download, Rocket, RotateCcw, Trash2, XCircle } from 'lucide-vue-next'
 
 const props = defineProps<{
   event: EventRecord
@@ -68,6 +69,7 @@ function statusLabel(status: EventStatus) {
         :loading="saving"
         @click="emit('activate')"
       >
+        <Rocket class="h-4 w-4" aria-hidden="true" />
         {{ saving ? 'Saving...' : 'Activate event' }}
       </AppButton>
 
@@ -78,6 +80,7 @@ function statusLabel(status: EventStatus) {
         :loading="saving"
         @click="emit('close')"
       >
+        <XCircle class="h-4 w-4" aria-hidden="true" />
         {{ saving ? 'Saving...' : 'Close event' }}
       </AppButton>
 
@@ -89,6 +92,7 @@ function statusLabel(status: EventStatus) {
         :loading="saving"
         @click="emit('requestDestruction')"
       >
+        <Trash2 class="h-4 w-4" aria-hidden="true" />
         {{ saving ? 'Saving...' : 'Request destruction' }}
       </AppButton>
 
@@ -100,6 +104,7 @@ function statusLabel(status: EventStatus) {
         :loading="saving"
         @click="emit('cancelDestruction')"
       >
+        <RotateCcw class="h-4 w-4" aria-hidden="true" />
         {{ saving ? 'Saving...' : 'Cancel destruction' }}
       </AppButton>
 
@@ -110,10 +115,12 @@ function statusLabel(status: EventStatus) {
         :loading="saving"
         @click="emit('archive')"
       >
+        <Archive class="h-4 w-4" aria-hidden="true" />
         {{ saving ? 'Saving...' : 'Archive event' }}
       </AppButton>
 
       <AppButton variant="secondary" class="w-full" :loading="exporting" @click="emit('export')">
+        <Download class="h-4 w-4" aria-hidden="true" />
         {{ exporting ? 'Exporting...' : 'Export JSON' }}
       </AppButton>
     </div>

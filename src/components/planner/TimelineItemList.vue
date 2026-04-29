@@ -8,6 +8,7 @@ import TimelineItemForm from './TimelineItemForm.vue'
 import AppButton from '../ui/AppButton.vue'
 import AppSurface from '../ui/AppSurface.vue'
 import AppPanelHeader from '../ui/AppPanelHeader.vue'
+import AppLoadingState from '../ui/AppLoadingState.vue'
 
 defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -42,7 +43,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
   <AppPanel tone="muted" class="space-y-6">
     <AppPanelHeader eyebrow="Timeline items" title="All scheduled work" size="md" />
 
-    <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading timeline items...</div>
+    <AppLoadingState v-if="loading" label="Loading timeline items..." />
 
     <AppEmptyState
       v-else-if="items.length === 0"

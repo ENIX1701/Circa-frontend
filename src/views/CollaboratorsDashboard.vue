@@ -3,6 +3,7 @@ import CollaboratorForm from '@/components/collaborators/CollaboratorForm.vue'
 import CollaboratorRow from '@/components/collaborators/CollaboratorRow.vue'
 import AppAlert from '@/components/ui/AppAlert.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
+import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import AppPanel from '@/components/ui/AppPanel.vue'
 import {
@@ -150,7 +151,7 @@ watch(
         </div>
       </div>
 
-      <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading collaborators...</div>
+      <AppLoadingState v-if="loading" label="Loading collaborators..." />
 
       <AppEmptyState
         v-else-if="collaborators.length === 0"

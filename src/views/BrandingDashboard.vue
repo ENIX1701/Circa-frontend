@@ -12,6 +12,7 @@ import AppPanel from '@/components/ui/AppPanel.vue'
 import BrandingForm from '@/components/branding/BrandingForm.vue'
 import BrandingPreview from '@/components/branding/BrandingPreview.vue'
 import TypographyPreview from '@/components/branding/TypographyPreview.vue'
+import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 
 const route = useRoute()
 const { getEventBranding, upsertEventBranding } = useEvents()
@@ -122,7 +123,7 @@ watch(
     <AppAlert v-if="saved" tone="success">Branding saved :3</AppAlert>
 
     <AppPanel v-if="loading">
-      <p class="text-sm text-(--app-text-muted)">Loading branding...</p>
+      <AppLoadingState v-if="loading" label="Loading branding..." />
     </AppPanel>
 
     <div v-else class="grid gap-8 lg:grid-cols-2">

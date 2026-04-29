@@ -3,6 +3,7 @@ import TeamMemberCard from '@/components/staff/TeamMemberCard.vue'
 import UnassignedWorkList from '@/components/staff/UnassignedWorkList.vue'
 import AppAlert from '@/components/ui/AppAlert.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
+import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import AppPanel from '@/components/ui/AppPanel.vue'
 import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
@@ -104,7 +105,7 @@ watch(
     <AppPanel tone="muted" class="space-y-6">
       <AppPanelHeader eyebrow="Assignments" title="Team workload" />
 
-      <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading staff...</div>
+      <AppLoadingState v-if="loading" label="Loading staff..." />
 
       <AppEmptyState
         v-else-if="teamCards.length === 0"

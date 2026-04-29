@@ -9,6 +9,7 @@ import EventCreateForm from '@/components/events/EventCreateForm.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
 import EventCard from '@/components/events/EventCard.vue'
 import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
+import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 
 const router = useRouter()
 const { listEvents, createEvent } = useEvents()
@@ -69,7 +70,7 @@ onMounted(() => {
       <AppPanel tone="muted" class="space-y-6">
         <AppPanelHeader eyebrow="Events you have access to" title="Event list" />
 
-        <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading events...</div>
+        <AppLoadingState v-if="loading" label="Loading events..." />
 
         <AppEmptyState
           v-else-if="events.length === 0"

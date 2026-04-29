@@ -14,6 +14,7 @@ import AppButton from '../ui/AppButton.vue'
 import { plannerTimelineStatusOptions } from '@/config/formOptions'
 import AppPanelHeader from '../ui/AppPanelHeader.vue'
 import { CalendarPlus, Edit2, Loader2, MoveLeft, MoveRight, Trash2 } from 'lucide-vue-next'
+import AppLoadingState from '../ui/AppLoadingState.vue'
 
 const props = defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -152,7 +153,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
   <AppPanel tone="muted" class="space-y-6 overflow-hidden">
     <AppPanelHeader eyebrow="Gantt" title="Timeline" />
 
-    <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading timeline...</div>
+    <AppLoadingState v-if="loading" label="Loading timeline..." />
 
     <AppEmptyState
       v-else-if="items.length === 0"

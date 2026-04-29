@@ -6,9 +6,9 @@ import AppAlert from '@/components/ui/AppAlert.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import EventMetadataPanel from '@/components/event-detail/EventMetadataPanel.vue'
 import EventLifecyclePanel from '@/components/event-detail/EventLifecyclePanel.vue'
-import AppPanel from '@/components/ui/AppPanel.vue'
 import AppLinkButton from '@/components/ui/AppLinkButton.vue'
 import { ChevronLeft } from 'lucide-vue-next'
+import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 
 const route = useRoute()
 const {
@@ -102,9 +102,7 @@ watch(
       ><ChevronLeft class="h-4 w-4" aria-hidden="true" /> Back to events</AppLinkButton
     >
 
-    <AppPanel v-if="loading">
-      <p class="text-sm text-(--app-text-muted)">Loading event...</p>
-    </AppPanel>
+    <AppLoadingState v-if="loading" label="Loading event details..." />
 
     <AppAlert v-else-if="error" tone="danger">{{ error }}</AppAlert>
 

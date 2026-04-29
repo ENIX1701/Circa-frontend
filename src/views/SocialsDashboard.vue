@@ -3,6 +3,7 @@ import SocialPostCard from '@/components/socials/SocialPostCard.vue'
 import SocialPostForm from '@/components/socials/SocialPostForm.vue'
 import AppAlert from '@/components/ui/AppAlert.vue'
 import AppEmptyState from '@/components/ui/AppEmptyState.vue'
+import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import AppPanel from '@/components/ui/AppPanel.vue'
 import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
@@ -177,7 +178,7 @@ watch(
       <AppPanel tone="muted" class="space-y-6">
         <AppPanelHeader eyebrow="Posts" title="Draft queue" />
 
-        <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading social posts...</div>
+        <AppLoadingState v-if="loading" label="Loading social posts..." />
 
         <AppEmptyState
           v-else-if="posts.length === 0"
