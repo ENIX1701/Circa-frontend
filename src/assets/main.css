@@ -185,6 +185,38 @@ textarea:disabled {
   background: #b91c1c;
 }
 
+.app-clickable-surface {
+  position: relative;
+  transition:
+    background-color 500ms ease,
+    border-color 500ms ease,
+    color 500ms ease;
+}
+
+.app-clickable-surface:hover,
+.app-clickable-surface:focus-visible {
+  border-color: var(--app-accent);
+  background: var(--app-surface-muted);
+}
+
+.app-clickable-surface:focus-visible {
+  outline: 2px solid var(--app-accent);
+  outline-offset: 2px;
+}
+
+.app-clickable-surface__arrow {
+  color: var(--app-text-muted);
+  transition:
+    color 500ms ease,
+    transform 500ms ease;
+}
+
+.app-clickable-surface:hover .app-clickable-surface__arrow,
+.app-clickable-surface:focus-visible .app-clickable-surface__arrow {
+  color: var(--app-text);
+  transform: translateX(2px);
+}
+
 .meta-grid {
   display: grid;
   gap: 0.75rem;

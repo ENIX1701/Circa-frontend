@@ -98,7 +98,9 @@ watch(
 
 <template>
   <div class="space-y-8">
-    <AppLinkButton to="/events" variant="ghost" size="sm"><ChevronLeft class="h-4 w-4" aria-hidden="true" /> Back to events</AppLinkButton>
+    <AppLinkButton to="/events" variant="ghost" size="sm"
+      ><ChevronLeft class="h-4 w-4" aria-hidden="true" /> Back to events</AppLinkButton
+    >
 
     <AppPanel v-if="loading">
       <p class="text-sm text-(--app-text-muted)">Loading event...</p>

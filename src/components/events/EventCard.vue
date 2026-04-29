@@ -2,6 +2,7 @@
 import type { EventRecord } from '@/composables/useEvents'
 import EventStatusBadge from '../events/EventStatusBadge.vue'
 import AppSurface from '../ui/AppSurface.vue'
+import { ChevronRight } from 'lucide-vue-next'
 
 defineProps<{
   event: EventRecord
@@ -24,7 +25,7 @@ function formatDate(value: string) {
     as="button"
     type="button"
     radius="2xl"
-    class="w-full text-left"
+    class="app-clickable-surface w-full text-left"
     @click="emit('open', event.id)"
   >
     <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -35,7 +36,10 @@ function formatDate(value: string) {
         </p>
       </div>
 
-      <EventStatusBadge :status="event.status" />
+      <div class="flex items-center gap-3">
+        <EventStatusBadge :status="event.status" />
+        <ChevronRight class="app-clickable-surface__arrow h-4 w-4 shrink-0" aria-hidden="true" />
+      </div>
     </div>
 
     <div class="mt-4 space-y-1 text-sm text-(--app-text-muted)">

@@ -1,7 +1,8 @@
 <script setup lang="ts">
-import { computed, type Component } from 'vue'
+import { ref, computed, watch, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { appSections, eventSections } from '@/config/sections'
+import { useEvents, type EventRecord } from '@/composables/useEvents'
 
 interface NavItem {
   key: string
@@ -14,7 +15,6 @@ interface NavItem {
 const route = useRoute()
 
 const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
-
 const inEventWorkspace = computed(() => eventId.value.length > 0)
 
 const navItems = computed<NavItem[]>(() => {
@@ -44,6 +44,29 @@ function isActive(item: NavItem) {
 
   return route.path === item.to || route.path.startsWith(`${item.to}/`)
 }
+
+const { getEvent } = useEvents()
+
+const currentEvent = ref<EventRecord | null>(null)
+const eventLoading = ref(false)
+
+async function loadCurrentEvent(id: string) {
+  currentEvent.value = null
+
+  if (!id) return
+
+  eventLoading.value = true
+
+  try {
+    currentEvent.value = await getEvent(id)
+  } catch {
+    currentEvent.value = null
+  } finally {
+    eventLoading.value = false
+  }
+}
+
+watch(eventId, (id) => void loadCurrentEvent(id), { immediate: true })
 </script>
 
 <template>
@@ -52,7 +75,9 @@ function isActive(item: NavItem) {
       <RouterLink to="/events" class="block border-b border-(--app-border) pb-5">
         <p class="section-label">Circa</p>
         <h1 class="mt-2 text-xl font-bold tracking-tight text-(--app-text)">Event workspace</h1>
-        <p class="mt-2 text-sm text-(--app-text-muted)">event name here maybe??</p>
+        <p class="mt-2 text-sm text-(--app-text-muted)">
+          {{ currentEvent?.name || (eventLoading ? 'Loading event...' : 'Your event hub') }}
+        </p>
       </RouterLink>
       <div class="mt-8">
         <p class="section-label">Navigation</p>
@@ -75,7 +100,7 @@ function isActive(item: NavItem) {
         </nav>
       </div>
       <div v-if="inEventWorkspace" class="mt-auto border-t border-(--app-border) pt-5">
-        <p class="section-label">Current event</p>
+        <p class="section-label">Event ID</p>
         <p class="mt-2 break-all font-mono text-xs text-(--app-text-muted)">{{ eventId }}</p>
       </div>
     </div>

@@ -22,9 +22,7 @@ const isRouterLink = computed(() => props.to !== undefined)
 const routerTo = computed(() => props.to ?? '/')
 
 const baseClasses = 'app-action'
-const sizeClasses = computed(() =>
-  props.size === 'sm' ? 'app-action--sm' : 'app-action--md',
-)
+const sizeClasses = computed(() => (props.size === 'sm' ? 'app-action--sm' : 'app-action--md'))
 const variantClasses = computed(() => `app-action--${props.variant}`)
 </script>
 
