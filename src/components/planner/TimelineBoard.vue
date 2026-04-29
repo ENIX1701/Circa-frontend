@@ -149,7 +149,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
 
 <template>
   <AppPanel tone="muted" class="space-y-6 overflow-hidden">
-    <AppPanelHeader eyebrow="Timeline" title="All scheduled work" size="md" />
+    <AppPanelHeader eyebrow="Gantt" title="Timeline" />
 
     <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading timeline...</div>
 

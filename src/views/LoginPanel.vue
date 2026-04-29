@@ -2,6 +2,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
+import AppPanel from '@/components/ui/AppPanel.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
+import AppField from '@/components/ui/AppField.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppLinkButton from '@/components/ui/AppLinkButton.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -61,58 +67,51 @@ function resetForm() {
   <div v-if="verifying" class="space-y-4 text-center">
     <p class="section-label">Authentication</p>
     <h1 class="text-3xl font-bold tracking-tight">Verifying your magic link...</h1>
-    <p class="text-sm text-(--color-text-muted)">Hang on, this will only take a moment :3</p>
+    <p class="text-sm text-(--app-text-muted)">Hang on, this will only take a moment :3</p>
   </div>
 
   <div v-else-if="linkSent" class="space-y-6">
     <div class="space-y-2">
       <p class="section-label">Check your inbox</p>
       <h1 class="text-3xl font-bold tracking-tight">Magic link requested</h1>
-      <p class="text-sm text(--color-text-muted)">{{ linkMessage }}</p>
+      <p class="text-sm text-(--app-text-muted)">{{ linkMessage }}</p>
     </div>
 
-    <div v-if="isTestInboxPreviewAvailable" class="glass-panel p-4">
-      <p class="text-sm leading-6 text-(--color-text-muted)">
+    <AppPanel v-if="isTestInboxPreviewAvailable" class="space-y-4">
+      <p class="text-sm leading-6 text-(--app-text-muted)">
         This instance is configured without an SMTP server. You can get the magic link from the dev
         inbox!
       </p>
 
       <div class="mt-4">
-        <RouterLink :to="{ name: 'test-inbox', query: { email } }" class="app-button-secondary"
-          >Open dev inbox</RouterLink
-        >
+        <AppLinkButton :to="{ name: 'test-inbox', query: { email } }">
+          Open dev inbox
+        </AppLinkButton>
       </div>
-    </div>
+    </AppPanel>
 
-    <button @click="resetForm" class="app-link-subtle">Try a different email</button>
+    <AppButton type="button" variant="ghost" @click="resetForm">Try a different email</AppButton>
   </div>
 
   <div v-else class="space-y-6">
     <div class="space-y-2">
       <p class="section-label">Authentication</p>
       <h1 class="text-3xl font-bold tracking-tight">Sign in</h1>
-      <p class="text-sm text(--color-text-muted)">
+      <p class="text-sm text-(--app-text-muted)">
         Enter your email and we'll send you your own magic link :3
       </p>
     </div>
 
-    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
+    <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
 
     <form @submit.prevent="handleRequestLink" class="space-y-5">
-      <div class="space-y-2">
-        <label for="email" class="block text-sm font-medium text-(--color-text-muted)">Email</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          placeholder="admin@example.com"
-          class="app-input"
-        />
-      </div>
+      <AppField id="email" label="email">
+        <AppInput id="email" v-model="email" type="email" placeholder="admin@example.com" />
+      </AppField>
 
-      <button type="submit" :disabled="loading" class="app-button-primary w-full">
+      <AppButton type="submit" :loading="loading" class="w-full">
         {{ loading ? 'Sending link...' : 'Send magic link' }}
-      </button>
+      </AppButton>
     </form>
   </div>
 </template>

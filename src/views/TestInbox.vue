@@ -2,6 +2,13 @@
 import { onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, type TestInboxLinkPreview } from '@/composables/useAuth'
+import AppPanel from '@/components/ui/AppPanel.vue'
+import AppField from '@/components/ui/AppField.vue'
+import AppInput from '@/components/ui/AppInput.vue'
+import AppButton from '@/components/ui/AppButton.vue'
+import AppPanelHeader from '@/components/ui/AppPanelHeader.vue'
+import AppLinkButton from '@/components/ui/AppLinkButton.vue'
+import AppAlert from '@/components/ui/AppAlert.vue'
 
 type LookupState = 'idle' | 'loading' | 'success' | 'empty' | 'unavailable' | 'error'
 
@@ -72,45 +79,35 @@ onMounted(async () => {
     <div class="space-y-2">
       <p class="section-label">Tester tools</p>
       <h1 class="text-3xl font-bold tracking-tight">Dev inbox</h1>
-      <p class="text-sm text-(--color-text-muted)">
+      <p class="text-sm text-(--app-text-muted)">
         Find the latest valid magic link for a tester email when SMTP is disabled.
       </p>
     </div>
 
-    <div class="glass-panel p-5">
+    <AppPanel>
       <div class="space-y-4">
-        <div class="space-y-2">
-          <label for="test-inbox-email" class="block text-sm font-medium text-(--color-text-muted)">
-            Email
-          </label>
-          <input
+        <AppField id="test-inbox-email" label="Email">
+          <AppInput
             id="test-inbox-email"
             v-model="email"
             type="email"
-            class="app-input"
             placeholder="tester@example.com"
           />
-        </div>
+        </AppField>
 
-        <button
+        <AppButton
           type="button"
-          class="app-button-primary w-full sm:w-auto"
-          :disabled="state === 'loading'"
+          class="w-full sm:w-auto"
+          :loading="state === 'loading'"
           @click="handleLookup"
         >
           {{ state === 'loading' ? 'Looking up link...' : 'Find latest link' }}
-        </button>
+        </AppButton>
       </div>
-    </div>
+    </AppPanel>
 
-    <div
-      v-if="state === 'success' && preview"
-      class="glass-panel glass-panel--strong p-5 space-y-5"
-    >
-      <div class="space-y-1">
-        <p class="section-label">Latest valid link</p>
-        <h2 class="text-xl font-semibold">{{ preview.email }}</h2>
-      </div>
+    <AppPanel v-if="state === 'success' && preview" tone="muted" class="space-y-5">
+      <AppPanelHeader eyebrow="Latest valid link" :title="preview.email" size="md" />
 
       <div class="meta-grid">
         <div class="meta-row">
@@ -123,25 +120,25 @@ onMounted(async () => {
         </div>
       </div>
 
-      <a :href="preview.magic_link" class="app-button-secondary"> Open magic link </a>
-    </div>
+      <AppLinkButton :href="preview.magic_link"> Open magic link </AppLinkButton>
+    </AppPanel>
 
-    <div v-else-if="state === 'empty'" class="glass-panel p-5">
-      <p class="section-label">No active link</p>
-      <p class="mt-2 text-sm text-(--color-text-muted)">
-        {{ message || 'No valid magic link was found for this email.' }}
-      </p>
-    </div>
+    <AppPanel v-else-if="state === 'empty'">
+      <AppPanelHeader
+        eyebrow="No active link"
+        :title="message || 'No valid magic link was found for this email :c'"
+      />
+    </AppPanel>
 
-    <div v-else-if="state === 'unavailable'" class="glass-panel p-5">
-      <p class="section-label">Unavailable</p>
-      <p class="mt-2 text-sm text-(--color-text-muted)">
-        {{ message || 'The test inbox is not enabled in this environment.' }}
-      </p>
-    </div>
+    <AppPanel v-else-if="state === 'unavailable'">
+      <AppPanelHeader
+        eyebrow="Unavailable"
+        :title="message || 'The test inbox is not enabled in this environment :c'"
+      />
+    </AppPanel>
 
-    <div v-else-if="state === 'error'" class="app-alert app-alert--danger">
+    <AppAlert v-else-if="state === 'error'" tone="danger">
       {{ message }}
-    </div>
+    </AppAlert>
   </div>
 </template>

@@ -5,6 +5,7 @@ import AppTextarea from '../ui/AppTextarea.vue'
 import AppButton from '../ui/AppButton.vue'
 import type { CreateEventRequest } from '@/composables/useEvents'
 import { reactive, ref } from 'vue'
+import AppAlert from '../ui/AppAlert.vue'
 
 const props = defineProps<{
   loading?: boolean
@@ -119,7 +120,7 @@ defineExpose({ resetForm })
 
 <template>
   <form class="space-y-5" @submit.prevent="handleSubmit">
-    <div v-if="error" class="app-alert app-alert--danger">{{ error }}</div>
+    <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
 
     <AppField id="event-name" label="Event name" required>
       <AppInput

@@ -3,6 +3,7 @@ import type { EventCollaboratorRecord, PlannerTimelineItemRecord } from '@/compo
 import AppPanel from '../ui/AppPanel.vue'
 import PlannerStatusBadge from '../planner/PlannerStatusBadge.vue'
 import RoleBadge from '../collaborators/RoleBadge.vue'
+import AppSurface from '../ui/AppSurface.vue'
 
 defineProps<{
   member: EventCollaboratorRecord
@@ -41,11 +42,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
     </div>
 
     <div v-if="assignments.length" class="space-y-3">
-      <div
-        v-for="item in assignments"
-        :key="item.id"
-        class="rounded-xl border border-(--app-border) bg-(--app-bg-subtle) p-3"
-      >
+      <AppSurface v-for="item in assignments" :key="item.id" padding="sm">
         <div class="flex items-start justify-between gap-3">
           <div>
             <p class="text-sm font-bold text-(--app-text)">
@@ -57,8 +54,8 @@ function formatWindow(item: PlannerTimelineItemRecord) {
           <PlannerStatusBadge :status="item.status" />
         </div>
 
-        <o class="mt-2 text-xs text-(--app-text-muted)">{{ item.notes }}</o>
-      </div>
+        <p v-if="item.notes" class="mt-2 text-xs text-(--app-text-muted)">{{ item.notes }}</p>
+      </AppSurface>
     </div>
 
     <p v-else class="text-sm text-(--app-text-muted)">No assigned timeline work yet :c</p>

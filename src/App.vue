@@ -5,6 +5,7 @@ import { useEventTheme } from './composables/useEventTheme'
 
 import DesktopSidebar from '@/components/DesktopSidebar.vue'
 import MobileNavbar from '@/components/MobileNavbar.vue'
+import AppPanel from './components/ui/AppPanel.vue'
 
 const route = useRoute()
 const isPublicRoute = computed(() => Boolean(route.meta.public))
@@ -19,9 +20,9 @@ useEventTheme()
       class="flex min-h-screen items-center justify-center px-6 py-10 md:px-10"
     >
       <div class="w-full max-w-xl">
-        <section class="glass-panel p-8 md:p-10">
+        <AppPanel class="p-8 md:p-10">
           <RouterView />
-        </section>
+        </AppPanel>
       </div>
     </main>
 

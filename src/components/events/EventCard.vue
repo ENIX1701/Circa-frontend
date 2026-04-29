@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import type { EventRecord } from '@/composables/useEvents'
 import EventStatusBadge from '../events/EventStatusBadge.vue'
+import AppSurface from '../ui/AppSurface.vue'
 
 defineProps<{
   event: EventRecord
@@ -19,9 +20,11 @@ function formatDate(value: string) {
 </script>
 
 <template>
-  <button
+  <AppSurface
+    as="button"
     type="button"
-    class="w-full rounded-2xl border border-(--app-border) bg-(--app-bg-subtle) p-5 text-left"
+    radius="2xl"
+    class="w-full text-left"
     @click="emit('open', event.id)"
   >
     <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
@@ -39,5 +42,5 @@ function formatDate(value: string) {
       <p>{{ event.venue }}</p>
       <p>{{ formatDate(event.starts_at) }} to {{ formatDate(event.ends_at) }}</p>
     </div>
-  </button>
+  </AppSurface>
 </template>

@@ -6,6 +6,8 @@ import PlannerStatusBadge from '../planner/PlannerStatusBadge.vue'
 import type { TimelineItemFormPayload } from './TimelineItemForm.vue'
 import TimelineItemForm from './TimelineItemForm.vue'
 import AppButton from '../ui/AppButton.vue'
+import AppSurface from '../ui/AppSurface.vue'
+import AppPanelHeader from '../ui/AppPanelHeader.vue'
 
 defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -38,12 +40,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
 
 <template>
   <AppPanel tone="muted" class="space-y-6">
-    <div class="flex items-start justify-between gap-4">
-      <div>
-        <p class="section-label">Timeline items</p>
-        <h2 class="mt-2 text-xl font-black text-(--app-text)">All scheduled work</h2>
-      </div>
-    </div>
+    <AppPanelHeader eyebrow="Timeline items" title="All scheduled work" size="md" />
 
     <div v-if="loading" class="text-sm text-(--app-text-muted)">Loading timeline items...</div>
 
@@ -54,11 +51,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
     />
 
     <div v-else class="grid max-h-136 gap-3 overflow-y-auto pr-2">
-      <article
-        v-for="item in items"
-        :key="item.id"
-        class="rounded-xl border border-(--app-border) bg-(--app-bg-subtle) p-4"
-      >
+      <AppSurface v-for="item in items" :key="item.id" as="article">
         <TimelineItemForm
           v-if="editingItemId === item.id"
           :item="item"
@@ -115,7 +108,7 @@ function formatWindow(item: PlannerTimelineItemRecord) {
             {{ item.notes }}
           </p>
         </template>
-      </article>
+      </AppSurface>
     </div>
   </AppPanel>
 </template>

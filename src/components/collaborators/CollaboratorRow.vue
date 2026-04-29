@@ -4,6 +4,7 @@ import AppSelect from '../ui/AppSelect.vue'
 import AppButton from '../ui/AppButton.vue'
 import RoleBadge from './RoleBadge.vue'
 import { roleOptions } from '@/config/formOptions'
+import AppSurface from '../ui/AppSurface.vue'
 
 defineProps<{
   member: EventCollaboratorRecord
@@ -19,8 +20,10 @@ const emit = defineEmits<{
 </script>
 
 <template>
-  <article
-    class="flex flex-col gap-4 rounded-2xl border border-(--app-border) bg-(--app-bg-subtle) p-4 md:flex-row md:items-center md:justify-between"
+  <AppSurface
+    as="article"
+    radius="2xl"
+    class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between"
   >
     <div>
       <div class="flex flex-wrap items-center gap-3">
@@ -52,5 +55,5 @@ const emit = defineEmits<{
         {{ deleting ? 'Removing...' : 'Remove' }}
       </AppButton>
     </div>
-  </article>
+  </AppSurface>
 </template>

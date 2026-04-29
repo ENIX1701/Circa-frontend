@@ -6,6 +6,8 @@ import AppAlert from '@/components/ui/AppAlert.vue'
 import AppPageHeader from '@/components/ui/AppPageHeader.vue'
 import EventMetadataPanel from '@/components/event-detail/EventMetadataPanel.vue'
 import EventLifecyclePanel from '@/components/event-detail/EventLifecyclePanel.vue'
+import AppPanel from '@/components/ui/AppPanel.vue'
+import AppLinkButton from '@/components/ui/AppLinkButton.vue'
 
 const route = useRoute()
 const {
@@ -95,11 +97,11 @@ watch(
 
 <template>
   <div class="space-y-8">
-    <RouterLink to="/events" class="app-link-subtle">Back to events</RouterLink>
+    <AppLinkButton to="/events" variant="ghost" size="sm">Back to events</AppLinkButton>
 
-    <div v-if="loading" class="glass-panel p-6">
+    <AppPanel v-if="loading">
       <p class="text-sm text-(--app-text-muted)">Loading event...</p>
-    </div>
+    </AppPanel>
 
     <AppAlert v-else-if="error" tone="danger">{{ error }}</AppAlert>
 

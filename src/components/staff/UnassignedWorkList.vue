@@ -4,6 +4,7 @@ import AppPanel from '../ui/AppPanel.vue'
 import AppEmptyState from '../ui/AppEmptyState.vue'
 import PlannerStatusBadge from '../planner/PlannerStatusBadge.vue'
 import AppPanelHeader from '../ui/AppPanelHeader.vue'
+import AppSurface from '../ui/AppSurface.vue'
 
 defineProps<{
   items: PlannerTimelineItemRecord[]
@@ -32,18 +33,14 @@ function formatWindow(item: PlannerTimelineItemRecord) {
     />
 
     <div v-else class="space-y-3">
-      <article
-        v-for="item in items"
-        :key="item.id"
-        class="rounded-xl border border-(--app-border) bg-(--app-bg-subtle) p-4"
-      >
+      <AppSurface v-for="item in items" :key="item.id" as="article">
         <p class="text-sm font-bold text-(--app-text)">{{ item.title }}</p>
         <div class="mt-2 flex flex-wrap items-center gap-2 text-xs text-(--app-text-muted)">
           <span>{{ item.item_type }}</span>
           <PlannerStatusBadge :status="item.status" />
           <span>{{ formatWindow(item) }}</span>
         </div>
-      </article>
+      </AppSurface>
     </div>
   </AppPanel>
 </template>

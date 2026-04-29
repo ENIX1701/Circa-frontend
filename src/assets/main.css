@@ -78,16 +78,6 @@ textarea:disabled {
   background: var(--app-bg);
 }
 
-.glass-panel {
-  background: var(--app-surface);
-  border: 1px solid var(--app-border);
-  border-radius: var(--radius-lg);
-}
-
-.glass-panel--strong {
-  background: var(--app-surface-muted);
-}
-
 .section-label {
   color: var(--app-text-muted);
   font-size: 0.72rem;
@@ -114,59 +104,6 @@ textarea:disabled {
   border-color: var(--app-accent);
   outline: 2px solid color-mix(in srgb, var(--app-accent) 35%, transparent);
   outline-offset: 2px;
-}
-
-.app-button-primary,
-.app-button-secondary {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  border-radius: var(--radius-md);
-  padding: 0.8rem 1rem;
-  font-weight: 700;
-}
-
-.app-button-primary {
-  background: var(--app-accent);
-  color: white;
-}
-
-.app-button-secondary {
-  border-color: var(--app-border);
-  background: var(--app-surface);
-  color: var(--app-text);
-}
-
-.app-button-primary:disabled,
-.app-button-secondary:disabled {
-  cursor: not-allowed;
-  opacity: 0.55;
-}
-
-.app-link-subtle {
-  color: var(--app-accent);
-  font-size: 0.92rem;
-  font-weight: 600;
-}
-
-.app-alert {
-  border-radius: var(--radius-md);
-  border: 1px solid var(--app-border);
-  padding: 0.9rem 1rem;
-  font-size: 0.92rem;
-}
-
-.app-alert--danger {
-  border-color: var(--app-danger);
-  background: color-mix(in srgb, var(--app-danger) 12%, var(--app-bg));
-  color: var(--app-text);
-}
-
-.app-alert--success {
-  border-color: #16a34a;
-  background: color-mix(in srgb, #16a34a 12%, var(--app-bg));
-  color: var(--app-text);
 }
 
 .meta-grid {

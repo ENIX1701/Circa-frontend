@@ -3,6 +3,7 @@ import type { EventCollaboratorRecord } from '@/composables/useEvents'
 import type { TimelineItemFormPayload } from './TimelineItemForm.vue'
 import AppPanel from '../ui/AppPanel.vue'
 import TimelineItemForm from './TimelineItemForm.vue'
+import AppPanelHeader from '../ui/AppPanelHeader.vue'
 
 defineProps<{
   collaborators: EventCollaboratorRecord[]
@@ -16,11 +17,12 @@ const emit = defineEmits<{
 
 <template>
   <AppPanel class="space-y-6">
-    <div>
-      <p class="section-label">Timeline</p>
-      <h2 class="mt-2 text-xl font-black text-(--app-text)">Add scheduled work</h2>
-      <p class="mt-2 text-sm text-(--app-text-muted)">Add a new item to the timeline!</p>
-    </div>
+    <AppPanelHeader
+      eyebrow="Timeline"
+      title="Add scheduled work"
+      description="Add a new item to the timeline!"
+      size="md"
+    />
 
     <TimelineItemForm
       :collaborators="collaborators"
