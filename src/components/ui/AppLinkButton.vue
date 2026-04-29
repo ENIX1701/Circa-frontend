@@ -21,17 +21,11 @@ const attrs = useAttrs()
 const isRouterLink = computed(() => props.to !== undefined)
 const routerTo = computed(() => props.to ?? '/')
 
-const baseClasses = 'inline-flex items-center justify-center gap-2 rounded-lg border font-bold'
+const baseClasses = 'app-action'
 const sizeClasses = computed(() =>
-  props.size === 'sm' ? 'px-3 py-2 text-xs' : 'px-4 py-3 text-sm',
+  props.size === 'sm' ? 'app-action--sm' : 'app-action--md',
 )
-
-const variantClasses = computed(() => ({
-  'border-(--app-accent) bg-(--app-accent) text-white': props.variant === 'primary',
-  'border-(--app-border) bg-(--app-surface) text-(--app-text)': props.variant === 'secondary',
-  'border-transparent bg-transparent text-(--app-text-muted)': props.variant === 'ghost',
-  'border-(--app-danger) bg-(--app-danger) text-white': props.variant === 'danger',
-}))
+const variantClasses = computed(() => `app-action--${props.variant}`)
 </script>
 
 <template>

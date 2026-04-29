@@ -13,11 +13,10 @@ npm run build
 **TODO:**
 
 - [x] login screen (with like qr or smth)
-- [ ] integration
+- [x] integration
   - [x] branding
   - [x] staff
   - [x] planner (version with no calendar/timeline for now)
-  - [ ] logistics
   - [x] socials
 - [x] token storage
 - [x] role-based views -> for now only options, not whole views
@@ -28,7 +27,7 @@ npm run build
 - [ ] typography in branding view
 - [x] slight redesign (ditch the shadows and go for just clean) -> i missed the 'slight' part i think x3
 - [x] dashboard layouts
-- [ ] codebase cleanup (who could've thought that max verstappen lvl development speed will lead to such chaos!)
+- [x] codebase cleanup (who could've thought that max verstappen lvl development speed will lead to such chaos!)
   - [x] migrating to primitives
     - [x] primitives
     - [x] views migration -> reusable components from pages first
