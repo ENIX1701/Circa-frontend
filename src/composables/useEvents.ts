@@ -1,5 +1,9 @@
+import { AUTH_TOKEN_CLEARED_EVENT, getStoredAuthClaims, clearStoredToken } from "./useAuth"
+
 export type EventStatus = 'draft' | 'active' | 'closed' | 'archived' | 'pending_destruction'
 export type EventMembershipRole = 'owner' | 'organizer' | 'staff' | 'volunteer'
+
+export const AUTH_EXPIRED_EVENT = 'circa:auth-expired'
 
 export interface EventRecord {
   id: string
@@ -190,10 +194,17 @@ async function readErrorMessage(response: Response): Promise<string> {
   return (await response.text()) || 'Request failed QwQ'
 }
 
+function expireSession() {
+  clearStoredToken()
+  clearEventsCache()
+  window.dispatchEvent(new Event(AUTH_EXPIRED_EVENT))
+}
+
 function getToken() {
   const token = localStorage.getItem('token')
 
-  if (!token) {
+  if (!token || !getStoredAuthClaims()) {
+    expireSession()
     throw new Error('You must be signed in to continue QwQ')
   }
 
@@ -214,7 +225,13 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
   })
 
   if (!response.ok) {
-    throw new Error(await readErrorMessage(response))
+    const message = await readErrorMessage(response)
+
+    if (response.status === 401) {
+      expireSession()
+    }
+
+    throw new Error(message)
   }
 
   return response
@@ -365,6 +382,8 @@ function clearEventsCache() {
   memoryCache.clear()
   inFlightRequests.clear()
 }
+
+window.addEventListener(AUTH_TOKEN_CLEARED_EVENT, clearEventsCache)
 
 export const useEvents = () => {
   async function listEvents(): Promise<EventRecord[]> {

@@ -3,6 +3,8 @@ import { ref, computed, watch, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { appSections, eventSections } from '@/config/sections'
 import { useEvents, type EventRecord } from '@/composables/useEvents'
+import { useAuth } from '@/composables/useAuth'
+import { LogOut } from 'lucide-vue-next'
 
 interface NavItem {
   key: string
@@ -16,6 +18,8 @@ const route = useRoute()
 
 const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
 const inEventWorkspace = computed(() => eventId.value.length > 0)
+
+const { logout } = useAuth()
 
 const navItems = computed<NavItem[]>(() => {
   if (!inEventWorkspace.value) {
@@ -95,9 +99,17 @@ watch(eventId, (id) => void loadCurrentEvent(id), { immediate: true })
           </RouterLink>
         </nav>
       </div>
-      <div v-if="inEventWorkspace" class="mt-auto border-t border-(--app-border) pt-5">
-        <p class="section-label">Event ID</p>
-        <p class="mt-2 break-all font-mono text-xs text-(--app-text-muted)">{{ eventId }}</p>
+
+      <div class="mt-auto space-y-4">
+        <button type="button" class="app-nav-item app-nav-item--desktop w-full" @click="logout">
+          <LogOut class="h-4 w-4 shrink-0" />
+          <span>Log out</span>
+        </button>
+
+        <div v-if="inEventWorkspace" class="border-t border-(--app-border) pt-5">
+          <p class="section-label">Event ID</p>
+          <p class="mt-2 break-all font-mono text-xs text-(--app-text-muted)">{{ eventId }}</p>
+        </div>
       </div>
     </div>
   </aside>

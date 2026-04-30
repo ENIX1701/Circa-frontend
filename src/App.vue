@@ -1,16 +1,28 @@
 <script setup lang="ts">
-import { computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useEventTheme } from './composables/useEventTheme'
 
 import DesktopSidebar from '@/components/DesktopSidebar.vue'
 import MobileNavbar from '@/components/MobileNavbar.vue'
 import AppPanel from './components/ui/AppPanel.vue'
 import AppToastHost from './components/ui/AppToastHost.vue'
+import { AUTH_EXPIRED_EVENT } from './composables/useEvents'
 
 const route = useRoute()
 const isPublicRoute = computed(() => Boolean(route.meta.public))
 
+const router = useRouter()
+
+function handleAuthExpired() {
+  if (route.name !== 'login') {
+    void router.replace({name: 'login'})
+  }
+}
+
+onMounted(() => window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired))
+onBeforeUnmount(() => window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired))
+ 
 useEventTheme()
 </script>
 

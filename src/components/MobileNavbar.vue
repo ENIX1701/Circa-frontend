@@ -2,6 +2,8 @@
 import { computed, type Component } from 'vue'
 import { useRoute } from 'vue-router'
 import { appSections, eventSections } from '@/config/sections'
+import { useAuth } from '@/composables/useAuth'
+import { LogOut } from 'lucide-vue-next'
 
 interface NavItem {
   key: string
@@ -14,8 +16,9 @@ interface NavItem {
 const route = useRoute()
 
 const eventId = computed(() => (typeof route.params.id === 'string' ? route.params.id : ''))
-
 const inEventWorkspace = computed(() => eventId.value.length > 0)
+
+const { logout } = useAuth()
 
 const navItems = computed<NavItem[]>(() => {
   if (!inEventWorkspace.value) {
@@ -61,6 +64,11 @@ function isActive(item: NavItem) {
         <component :is="item.icon" class="h-5 w-5 shrink-0" />
         <span class="leading-none">{{ item.title }}</span>
       </RouterLink>
+      
+      <button type="button" class="app-nav-item app-nav-item--mobile" @click="logout">
+        <LogOut class="h-5 w-5 shrink-0" />
+        <span class="leading-none">Log out</span>
+      </button>
     </div>
   </nav>
 </template>

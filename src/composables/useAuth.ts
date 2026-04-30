@@ -26,16 +26,47 @@ export function notifyTokenChange() {
   tokenVersion.value++
 }
 
-function parseToken() {
+// proper auth and token rotation finally x3
+export const AUTH_TOKEN_CLEARED_EVENT = 'circa:auth-token-cleared'
+
+export interface AuthClaims {
+  sub: string
+  role: string
+  exp: number
+}
+
+function decodeBase64URL(value: string) {
+  const normalized = value.replace(/-/g, '+').replace(/_/g, '/')
+  return atob(normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '='))
+}
+
+export function clearStoredToken() {
+  localStorage.removeItem('token')
+  notifyTokenChange()
+  window.dispatchEvent(new Event(AUTH_TOKEN_CLEARED_EVENT))
+}
+
+export function getStoredAuthClaims(): AuthClaims | null {
   const token = localStorage.getItem('token')
   if (!token) return null
 
   try {
     const payload = token.split('.')[1]
-    if (!payload) return null
+    if (!payload) throw new Error('Missing token payload')
 
-    return JSON.parse(atob(payload)) as { sub: string; role: string; exp: number }
+    const claims = JSON.parse(decodeBase64URL(payload)) as AuthClaims
+    if (!claims.sub || !claims.role || !Number.isFinite(claims.exp)) {
+      throw new Error('Invalid token claims')
+    }
+
+    if (claims.exp * 1000 <= Date.now()) {
+      clearStoredToken()
+      return null
+    }
+
+    return claims
   } catch {
+    clearStoredToken()
     return null
   }
 }
@@ -56,7 +87,7 @@ export const useAuth = () => {
 
   const claims = computed(() => {
     void tokenVersion.value // should suffice to notify/trigger the ref
-    return parseToken()
+    return getStoredAuthClaims()
   })
   const role = computed(() => (claims.value?.role as Role) ?? null)
   const isLoggedIn = computed(() => claims.value !== null)
@@ -64,8 +95,7 @@ export const useAuth = () => {
 
   // no server-side logout for now
   function logout() {
-    localStorage.removeItem('token')
-    notifyTokenChange()
+    clearStoredToken()
     router.push({ name: 'login' })
   }
 

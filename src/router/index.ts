@@ -8,6 +8,7 @@ import SocialsDashboard from '@/views/SocialsDashboard.vue'
 import EventsHub from '@/views/EventsHub.vue'
 import CollaboratorsDashboard from '@/views/CollaboratorsDashboard.vue'
 import StaffDashboard from '@/views/StaffDashboard.vue'
+import { getStoredAuthClaims } from '@/composables/useAuth'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -67,13 +68,13 @@ const router = createRouter({
 })
 
 router.beforeEach((to) => {
-  const token = localStorage.getItem('token')
+  const isAuthenticated = getStoredAuthClaims() !== null
 
-  if (!token && !to.meta.public) {
+  if (!isAuthenticated && !to.meta.public) {
     return { name: 'login' }
   }
 
-  if (token && to.name === 'login') {
+  if (isAuthenticated && to.name === 'login') {
     if (to.query.token) {
       return
     }
