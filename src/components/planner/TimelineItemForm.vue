@@ -149,7 +149,17 @@ function handleSubmit() {
       </AppField>
 
       <AppField label="Owner">
-        <AppInput v-model="form.owner" type="text" placeholder="Owner" :disabled="loading" />
+        <AppSelect
+          v-model="form.owner"
+          :disabled="loading"
+          :options="[
+            { label: 'Unassigned', value: '' },
+            ...collaborators.map((member) => ({
+              label: `${member.name} ${member.surname} - ${member.role}`,
+              value: `${member.name} ${member.surname}`,
+            })),
+          ]"
+        />
       </AppField>
     </div>
 

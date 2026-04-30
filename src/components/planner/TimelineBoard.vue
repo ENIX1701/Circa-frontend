@@ -100,8 +100,7 @@ const timelineGridTemplate = computed(() => {
   const dayColumns = `repeat(${timelineDays.value.length}, minmax(${timelineDayColumnMinRem}rem, 1fr))`
 
   return `${timelineLabelColumnRem}rem ${dayColumns}`
-}
-)
+})
 
 const timelineGridStyle = computed(() => ({
   gridTemplateColumns: timelineGridTemplate.value,
@@ -176,19 +175,20 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
       v-else
       class="@container overflow-x-auto rounded-xl border border-(--app-border) bg-(--app-bg-subtle)"
     >
-      <div class="grid items-center border-b border-(--app-border) bg-(--app-surface) text-xs font-bold uppercase text-(--app-text-muted)" :style="timelineGridStyle">
+      <div
+        class="grid items-center border-b border-(--app-border) bg-(--app-surface) text-xs font-bold uppercase text-(--app-text-muted)"
+        :style="timelineGridStyle"
+      >
+        <div class="sticky left-0 z-30 border-r border-(--app-border) bg-(--app-surface) px-3 py-2">
+          Item
+        </div>
         <div
-           class="sticky left-0 z-30 border-r border-(--app-border) bg-(--app-surface) px-3 py-2"
+          v-for="day in timelineDays"
+          :key="day.toISOString()"
+          class="border-r border-(--app-border) px-2 py-2"
         >
-            Item
-          </div>
-          <div
-            v-for="day in timelineDays"
-            :key="day.toISOString()"
-            class="border-r border-(--app-border) px-2 py-2"
-          >
-            {{ formatTimelineDay(day) }}
-          </div>
+          {{ formatTimelineDay(day) }}
+        </div>
       </div>
 
       <div
@@ -296,7 +296,10 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
             @cancel="emit('cancelEdit')"
           />
 
-          <div v-else class="sticky left-3 z-20 flex w-[calc(100cqw-1.5rem)] flex-wrap items-center justify-between gap-3">
+          <div
+            v-else
+            class="sticky left-3 z-20 flex w-[calc(100cqw-1.5rem)] flex-wrap items-center justify-between gap-3"
+          >
             <AppSelect
               :model-value="item.status"
               :options="plannerTimelineStatusOptions"
