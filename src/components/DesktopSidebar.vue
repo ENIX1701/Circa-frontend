@@ -108,7 +108,7 @@ watch(eventId, (id) => void loadCurrentEvent(id), { immediate: true })
 
         <div v-if="inEventWorkspace" class="border-t border-(--app-border) pt-5">
           <p class="section-label">Event ID</p>
-          <p class="mt-2 break-all font-mono text-xs text-(--app-text-muted)">{{ eventId }}</p>
+          <p class="mt-2 break-all font-mono text-xs text-(--app-text-muted)">{{ currentEvent?.id || eventId }}</p>
         </div>
       </div>
     </div>
