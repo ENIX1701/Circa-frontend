@@ -33,3 +33,9 @@ npm run build
     - [x] views migration -> reusable components from pages first
 - [x] deploy...
 - [x] local caching
+
+#### test accounts
+`maya.chen@circa.demo`
+`oliver.grant@circa.demo`
+`sofia.marin@circa.demo`
+`grace.kim@circa.demo`
