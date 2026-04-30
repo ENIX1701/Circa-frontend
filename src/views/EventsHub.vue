@@ -55,7 +55,7 @@ async function handleCreateEvent(payload: CreateEventRequest) {
 }
 
 function openEvent(eventRef: string) {
-  router.push({ name: 'event-detail', params: { eventRef } })
+  router.push({ name: 'event-detail', params: { id: eventRef } })
 }
 
 onMounted(() => {

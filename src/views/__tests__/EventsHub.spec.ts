@@ -107,7 +107,7 @@ describe('EventsHub.vue', () => {
     })
     expect(pushMock).toHaveBeenCalledWith({
       name: 'event-detail',
-      params: { id: 'evt-1' },
+      params: { id: 'spring-summit' },
     })
   })
 })
