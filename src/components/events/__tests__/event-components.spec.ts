@@ -15,7 +15,8 @@ describe('event components', () => {
     const wrapper = mount(EventCreateForm)
 
     await wrapper.find('form').trigger('submit.prevent')
-    expect(wrapper.text()).toContain('Pwease fill in all required fields')
+    expect(wrapper.text()).toContain('Slug is required')
+    expect(wrapper.text()).toContain('End time is required')
 
     await wrapper.find('#event-name').setValue('  Spring Summit 2026!  ')
     expect((wrapper.find('#event-slug').element as HTMLInputElement).value).toBe(
@@ -44,7 +45,7 @@ describe('event components', () => {
     expect((wrapper.find('#event-name').element as HTMLInputElement).value).toBe('')
   })
 
-  it('renders event cards and emits the selected event id', async () => {
+  it('renders event cards and emits the selected event slug', async () => {
     const wrapper = mount(EventCard, {
       props: { event: eventFactory({ status: 'pending_destruction', description: '' }) },
     })
@@ -53,7 +54,7 @@ describe('event components', () => {
     expect(wrapper.text()).toContain('Pending destruction')
 
     await wrapper.find('button').trigger('click')
-    expect(wrapper.emitted('open')).toEqual([['evt-1']])
+    expect(wrapper.emitted('open')).toEqual([['spring-summit']])
   })
 
   it('shows lifecycle actions only when the owner can use them', async () => {

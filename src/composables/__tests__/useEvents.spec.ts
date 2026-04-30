@@ -11,6 +11,13 @@ import {
 } from '@/test/factories'
 
 const fetchMock = vi.fn<typeof fetch>()
+const authToken = fakeJwt({ sub: 'user-1', role: 'admin', exp: 9999999999 })
+
+function fakeJwt(payload: Record<string, unknown>): string {
+  const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
+  const body = btoa(JSON.stringify(payload))
+  return `${header}.${body}.fake-signature`
+}
 
 function jsonResponse(body: unknown, init: ResponseInit = {}) {
   return new Response(JSON.stringify(body), {
@@ -42,7 +49,7 @@ function lastRequestHeaders() {
 }
 
 function setToken() {
-  localStorage.setItem('token', 'token-123')
+  localStorage.setItem('token', authToken)
 }
 
 describe('useEvents', () => {
@@ -81,7 +88,7 @@ describe('useEvents', () => {
       '/api/events',
       expect.objectContaining({ method: 'POST' }),
     )
-    expect(lastRequestHeaders().get('Authorization')).toBe('Bearer token-123')
+    expect(lastRequestHeaders().get('Authorization')).toBe(`Bearer ${authToken}`)
     expect(lastRequestHeaders().get('Content-Type')).toBe('application/json')
     expect(lastRequestBody()).toMatchObject({
       name: 'Spring Summit',

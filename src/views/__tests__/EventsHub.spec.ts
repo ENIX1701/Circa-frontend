@@ -103,7 +103,7 @@ describe('EventsHub.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Event created',
-      description: 'Spring Summit is ready to plan.',
+      description: 'Spring Summit is ready to plan :3',
     })
     expect(pushMock).toHaveBeenCalledWith({
       name: 'event-detail',

@@ -11,6 +11,8 @@ vi.mock('vue-router', () => ({
   }),
 }))
 
+const validExp = 9999999999
+
 // Helper: build a fake JWT with the given payload (no signature verification on the frontend)
 function fakeJwt(payload: Record<string, unknown>): string {
   const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
@@ -74,7 +76,7 @@ describe('useAuth', () => {
   // ── role ─────────────────────────────────────────────────────────
 
   it('returns the role from the token', () => {
-    const token = fakeJwt({ sub: 'u', role: 'organizer', exp: 1 })
+    const token = fakeJwt({ sub: 'u', role: 'organizer', exp: validExp })
     localStorage.setItem('token', token)
     notifyTokenChange()
 
@@ -89,7 +91,7 @@ describe('useAuth', () => {
 
   it('returns the correct role for every Role enum value', () => {
     for (const r of Object.values(Role)) {
-      localStorage.setItem('token', fakeJwt({ sub: 'u', role: r, exp: 1 }))
+      localStorage.setItem('token', fakeJwt({ sub: 'u', role: r, exp: validExp }))
       notifyTokenChange()
 
       const { role } = useAuth()
@@ -105,7 +107,7 @@ describe('useAuth', () => {
   })
 
   it('is true when a valid token exists', () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { isLoggedIn } = useAuth()
@@ -123,7 +125,7 @@ describe('useAuth', () => {
   // ── logout ───────────────────────────────────────────────────────
 
   it('removes the token from localStorage on logout', () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { logout } = useAuth()
@@ -133,7 +135,7 @@ describe('useAuth', () => {
   })
 
   it('navigates to login route on logout', () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { logout } = useAuth()
@@ -143,7 +145,7 @@ describe('useAuth', () => {
   })
 
   it('sets isLoggedIn to false after logout', async () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { logout, isLoggedIn } = useAuth()
@@ -156,7 +158,7 @@ describe('useAuth', () => {
   })
 
   it('sets claims to null after logout', async () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { logout, claims } = useAuth()
@@ -171,7 +173,7 @@ describe('useAuth', () => {
   // ── hasRole ──────────────────────────────────────────────────────
 
   it('returns true when the user has one of the specified roles', () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { hasRole } = useAuth()
@@ -180,7 +182,7 @@ describe('useAuth', () => {
   })
 
   it('returns false when the user does not have any of the specified roles', () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'volunteer', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'volunteer', exp: validExp }))
     notifyTokenChange()
 
     const { hasRole } = useAuth()
@@ -194,7 +196,7 @@ describe('useAuth', () => {
   })
 
   it('returns true for staff when staff is in the allowed list', () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'staff', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'staff', exp: validExp }))
     notifyTokenChange()
 
     const { hasRole } = useAuth()
@@ -207,15 +209,15 @@ describe('useAuth', () => {
     const { claims } = useAuth()
     expect(claims.value).toBeNull()
 
-    localStorage.setItem('token', fakeJwt({ sub: 'new-user', role: 'staff', exp: 42 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'new-user', role: 'staff', exp: validExp }))
     notifyTokenChange()
     await nextTick()
 
-    expect(claims.value).toEqual({ sub: 'new-user', role: 'staff', exp: 42 })
+    expect(claims.value).toEqual({ sub: 'new-user', role: 'staff', exp: validExp })
   })
 
   it('reflects token removal after notifyTokenChange', async () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { isLoggedIn } = useAuth()
@@ -229,13 +231,13 @@ describe('useAuth', () => {
   })
 
   it('reflects token replacement after notifyTokenChange', async () => {
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'admin', exp: validExp }))
     notifyTokenChange()
 
     const { role } = useAuth()
     expect(role.value).toBe(Role.Admin)
 
-    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'volunteer', exp: 1 }))
+    localStorage.setItem('token', fakeJwt({ sub: 'u', role: 'volunteer', exp: validExp }))
     notifyTokenChange()
     await nextTick()
 

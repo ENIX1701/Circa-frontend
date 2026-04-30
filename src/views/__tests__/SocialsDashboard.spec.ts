@@ -76,7 +76,7 @@ describe('SocialsDashboard.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Post created',
-      description: 'Second post was added to the draft queue.',
+      description: 'Second post was added to the draft queue',
     })
     expect(wrapper.text()).toContain('Second post')
 
@@ -112,7 +112,7 @@ describe('SocialsDashboard.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Post removed',
-      description: 'Launch teaser was removed from the draft queue.',
+      description: 'Launch teaser was removed from the draft queue',
     })
     expect(wrapper.text()).not.toContain('Launch teaser')
   })

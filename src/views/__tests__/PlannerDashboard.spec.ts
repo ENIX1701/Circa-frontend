@@ -47,7 +47,7 @@ const formPayload: TimelineItemFormPayload = {
   starts_at_local: '2026-05-15T09:00',
   ends_at_local: '2026-05-15T17:00',
   status: 'planned',
-  owner: '  Ops  ',
+  owner: '  Ada Lovelace  ',
   color: '#123456',
   notes: '  Bring truss  ',
   assigned_user_id: 'user-1',
@@ -93,7 +93,7 @@ describe('PlannerDashboard.vue', () => {
         title: 'Build stage',
         item_type: 'task',
         status: 'planned',
-        owner: 'Ops',
+        owner: 'Ada Lovelace',
         notes: 'Bring truss',
         color: '#123456',
         assigned_user_id: 'user-1',
@@ -104,7 +104,7 @@ describe('PlannerDashboard.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Timeline item created',
-      description: 'Build stage was added to the planner.',
+      description: 'Build stage was added to the planner',
     })
     expect(wrapper.text()).toContain('Build stage')
   })
@@ -151,7 +151,7 @@ describe('PlannerDashboard.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Timeline item removed',
-      description: 'Build landing stage was removed from the planner.',
+      description: 'Build landing stage was removed from the planner',
     })
     expect(wrapper.text()).not.toContain('Build landing stage')
   })

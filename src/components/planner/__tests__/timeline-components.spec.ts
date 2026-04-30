@@ -23,9 +23,9 @@ async function fillTimelineForm(wrapper: ReturnType<typeof mount>) {
   await inputs[1]!.setValue('2026-05-15T09:00')
   await inputs[2]!.setValue('2026-05-15T17:00')
   await selects[1]!.setValue('in_progress')
-  await inputs[3]!.setValue('  Ops  ')
-  await selects[2]!.setValue('user-1')
-  await inputs[5]!.setValue('#123456')
+  await selects[2]!.setValue('Ada Lovelace')
+  await selects[3]!.setValue('user-1')
+  await inputs[4]!.setValue('#123456')
   await wrapper.find('textarea').setValue('  Bring truss  ')
 }
 
@@ -47,7 +47,7 @@ describe('planner timeline components', () => {
       starts_at_local: '2026-05-15T09:00',
       ends_at_local: '2026-05-15T17:00',
       status: 'in_progress',
-      owner: '  Ops  ',
+      owner: 'Ada Lovelace',
       color: '#123456',
       notes: '  Bring truss  ',
       assigned_user_id: 'user-1',
@@ -63,6 +63,7 @@ describe('planner timeline components', () => {
           starts_at: '2026-05-15T09:30:00',
           ends_at: '2026-05-15T10:30:00',
           status: 'blocked',
+          owner: 'Ada Lovelace',
         }),
       },
     })
@@ -71,6 +72,7 @@ describe('planner timeline components', () => {
       'Build landing stage',
     )
     expect((wrapper.findAll('select')[1]!.element as HTMLSelectElement).value).toBe('blocked')
+    expect((wrapper.findAll('select')[2]!.element as HTMLSelectElement).value).toBe('Ada Lovelace')
 
     await wrapper
       .findAll('button')

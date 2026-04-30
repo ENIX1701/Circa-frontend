@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { defineComponent, reactive } from 'vue'
-import { mount } from '@vue/test-utils'
+import { flushPromises, mount } from '@vue/test-utils'
+import { eventFactory } from '@/test/factories'
 
 const routeMock = reactive<{
   path: string
@@ -13,6 +14,9 @@ const routeMock = reactive<{
 })
 
 const useEventThemeMock = vi.fn()
+const getEventMock = vi.fn()
+const logoutMock = vi.fn()
+const routerReplaceMock = vi.fn()
 const RouterLinkStub = defineComponent({
   props: ['to'],
   template: '<a :data-to="typeof to === `string` ? to : JSON.stringify(to)"><slot /></a>',
@@ -32,10 +36,26 @@ const globalStubs = {
 
 vi.mock('vue-router', () => ({
   useRoute: () => routeMock,
+  useRouter: () => ({
+    replace: routerReplaceMock,
+  }),
 }))
 
 vi.mock('@/composables/useEventTheme', () => ({
   useEventTheme: () => useEventThemeMock(),
+}))
+
+vi.mock('@/composables/useEvents', () => ({
+  AUTH_EXPIRED_EVENT: 'circa:auth-expired',
+  useEvents: () => ({
+    getEvent: getEventMock,
+  }),
+}))
+
+vi.mock('@/composables/useAuth', () => ({
+  useAuth: () => ({
+    logout: logoutMock,
+  }),
 }))
 
 import App from '@/App.vue'
@@ -48,6 +68,9 @@ describe('navigation shell components', () => {
     routeMock.params = {}
     routeMock.meta = {}
     useEventThemeMock.mockReset()
+    getEventMock.mockReset().mockResolvedValue(eventFactory())
+    logoutMock.mockReset()
+    routerReplaceMock.mockReset()
   })
 
   it('renders public routes without side navigation', () => {
@@ -76,20 +99,22 @@ describe('navigation shell components', () => {
     expect(wrapper.text()).not.toContain('Current event')
   })
 
-  it('renders event workspace navigation and active nested links', () => {
-    routeMock.path = '/events/evt-1/planner'
-    routeMock.params = { id: 'evt-1' }
+  it('renders event workspace navigation and active nested links', async () => {
+    routeMock.path = '/events/spring-summit/planner'
+    routeMock.params = { id: 'spring-summit' }
+    getEventMock.mockResolvedValueOnce(eventFactory({ id: 'evt-1', slug: 'spring-summit' }))
 
     const desktop = mount(DesktopSidebar, globalStubs)
     const mobile = mount(MobileNavbar, globalStubs)
+    await flushPromises()
 
     expect(desktop.text()).toContain('Planner')
     expect(desktop.text()).toContain('Branding')
     expect(desktop.text()).toContain('evt-1')
-    expect(desktop.find('[data-to="/events/evt-1/planner"]').classes()).toContain(
+    expect(desktop.find('[data-to="/events/spring-summit/planner"]').classes()).toContain(
       'app-nav-item--active',
     )
     expect(mobile.text()).toContain('Socials')
-    expect(mobile.find('[data-to="/events/evt-1"]').exists()).toBe(true)
+    expect(mobile.find('[data-to="/events/spring-summit"]').exists()).toBe(true)
   })
 })

@@ -103,7 +103,7 @@ describe('CollaboratorsDashboard.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Collaborator removed',
-      description: 'Grace Hopper no longer has access.',
+      description: 'Grace Hopper no longer has access :c',
     })
     expect(wrapper.text()).not.toContain('Grace Hopper')
   })

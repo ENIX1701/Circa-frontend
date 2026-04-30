@@ -89,7 +89,7 @@ describe('BrandingDashboard.vue', () => {
     expect(pushToastMock).toHaveBeenCalledWith({
       tone: 'success',
       title: 'Branding saved',
-      description: 'Your event branding has been updated.',
+      description: 'Your event branding has been updated :3',
     })
     expect(brandingEvents[0]!.detail).toEqual({ eventId: 'evt-1', branding: saved })
   })
