@@ -13,7 +13,7 @@ import AppLoadingState from '@/components/ui/AppLoadingState.vue'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const { listEvents, createEvent } = useEvents()
+const { listEvents, createEvent, checkEventSlugAvailability } = useEvents()
 const { pushToast } = useToast()
 
 const loading = ref(true)
@@ -46,7 +46,7 @@ async function handleCreateEvent(payload: CreateEventRequest) {
       title: 'Event created',
       description: `${created.name} is ready to plan :3`,
     })
-    router.push({ name: 'event-detail', params: { id: created.id } })
+    router.push({ name: 'event-detail', params: { id: created.slug || created.id } })
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Failed to create event QwQ'
   } finally {
@@ -54,8 +54,8 @@ async function handleCreateEvent(payload: CreateEventRequest) {
   }
 }
 
-function openEvent(id: string) {
-  router.push({ name: 'event-detail', params: { id } })
+function openEvent(eventRef: string) {
+  router.push({ name: 'event-detail', params: { eventRef } })
 }
 
 onMounted(() => {
@@ -98,7 +98,11 @@ onMounted(() => {
           description="Your next great adventure begins here :3"
         />
 
-        <EventCreateForm :loading="creating" @create="handleCreateEvent" />
+        <EventCreateForm
+          :loading="creating"
+          :check-slug-availability="checkEventSlugAvailability"
+          @create="handleCreateEvent"
+        />
       </AppPanel>
     </div>
   </div>

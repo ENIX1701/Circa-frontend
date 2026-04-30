@@ -4,11 +4,12 @@ import AppInput from '../ui/AppInput.vue'
 import AppTextarea from '../ui/AppTextarea.vue'
 import AppButton from '../ui/AppButton.vue'
 import type { CreateEventRequest } from '@/composables/useEvents'
-import { reactive, ref } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import AppAlert from '../ui/AppAlert.vue'
 
 const props = defineProps<{
   loading?: boolean
+  checkSlugAvailability?: (slug: string) => Promise<boolean>
 }>()
 
 const emit = defineEmits<{
@@ -38,6 +39,53 @@ function slugify(value: string) {
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
 }
+
+const submitted = ref(false)
+const slugChecking = ref(false)
+const slugAvailable = ref<boolean | null>(null)
+const slugAvailabilityError = ref('')
+const slugPattern = /^[a-z0-9]+(?:-[a-z0-9]+)*$/
+
+const slugError = computed(() => {
+  const slug = form.slug.trim()
+  if (!slug && (submitted.value || slugTouched.value)) return 'Slug is required'
+  if (slug && !slugPattern.test(slug))
+    return 'Please use lowercase letters, numbers and single hyphens only!'
+  if (slugAvailabilityError.value) return slugAvailabilityError.value
+  if (slugAvailable.value === false) return 'That slug is already in use'
+  return ''
+})
+
+const hasValidationErrors = computed(() => Boolean(slugError.value || slugChecking.value))
+
+let slugTimer: number | undefined
+let slugRequestId = 0
+
+watch(
+  () => form.slug,
+  (slug) => {
+    window.clearTimeout(slugTimer)
+    slugAvailable.value = null
+    slugAvailabilityError.value = ''
+
+    const normalized = slug.trim()
+    if (!normalized || !slugPattern.test(normalized) || !props.checkSlugAvailability) return
+
+    const requestId = ++slugRequestId
+    slugChecking.value = true
+
+    slugTimer = window.setTimeout(async () => {
+      try {
+        const available = await props.checkSlugAvailability!(normalized)
+        if (requestId === slugRequestId) slugAvailable.value = available
+      } catch {
+        if (requestId === slugRequestId) slugAvailabilityError.value = 'Could not check slug'
+      } finally {
+        if (requestId === slugRequestId) slugChecking.value = false
+      }
+    }, 500)
+  },
+)
 
 function handleNameInput(value: string | number) {
   form.name = String(value)
@@ -88,7 +136,10 @@ function toRfc3339Local(value: string) {
 }
 
 async function handleSubmit() {
+  submitted.value = true
   error.value = ''
+
+  if (hasValidationErrors.value) return
 
   if (
     !form.name.trim() ||
@@ -132,7 +183,13 @@ defineExpose({ resetForm })
       />
     </AppField>
 
-    <AppField id="event-slug" label="Slug" required>
+    <AppField
+      id="event-slug"
+      label="Slug"
+      required
+      :error="slugError"
+      :hint="slugChecking ? 'Checking slug...' : slugAvailable ? 'Slug is available' : undefined"
+    >
       <AppInput
         id="event-slug"
         v-model="form.slug"
@@ -179,8 +236,12 @@ defineExpose({ resetForm })
       </AppField>
     </div>
 
-    <AppButton type="submit" class="w-full" :loading="props.loading">{{
-      props.loading ? 'Creating event...' : 'Create event'
-    }}</AppButton>
+    <AppButton
+      type="submit"
+      class="w-full"
+      :loading="props.loading"
+      :disabled="hasValidationErrors"
+      >{{ props.loading ? 'Creating event...' : 'Create event' }}</AppButton
+    >
   </form>
 </template>

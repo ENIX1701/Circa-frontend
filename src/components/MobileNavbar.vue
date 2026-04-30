@@ -64,7 +64,7 @@ function isActive(item: NavItem) {
         <component :is="item.icon" class="h-5 w-5 shrink-0" />
         <span class="leading-none">{{ item.title }}</span>
       </RouterLink>
-      
+
       <button type="button" class="app-nav-item app-nav-item--mobile" @click="logout">
         <LogOut class="h-5 w-5 shrink-0" />
         <span class="leading-none">Log out</span>

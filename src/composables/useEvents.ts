@@ -1,4 +1,4 @@
-import { AUTH_TOKEN_CLEARED_EVENT, getStoredAuthClaims, clearStoredToken } from "./useAuth"
+import { AUTH_TOKEN_CLEARED_EVENT, getStoredAuthClaims, clearStoredToken } from './useAuth'
 
 export type EventStatus = 'draft' | 'active' | 'closed' | 'archived' | 'pending_destruction'
 export type EventMembershipRole = 'owner' | 'organizer' | 'staff' | 'volunteer'
@@ -183,6 +183,10 @@ export interface UpdatePlannerTimelineItemRequest {
   position?: number
 }
 
+interface SlugAvailabilityResponse {
+  available: boolean
+}
+
 async function readErrorMessage(response: Response): Promise<string> {
   const contentType = response.headers.get('content-type') ?? ''
 
@@ -335,6 +339,7 @@ function removeCachedItem<T extends { id: string }>(path: string, itemId: string
 
 function cacheEvent(event: EventRecord) {
   setCached(eventPath(event.id), event)
+  setCached(eventPath(event.slug), event)
   upsertCachedItem('/api/events', event)
 }
 
@@ -708,6 +713,14 @@ export const useEvents = () => {
     invalidateCached(eventExportPath(eventId))
   }
 
+  async function checkEventSlugAvailability(slug: string): Promise<boolean> {
+    const response = await requestJson<SlugAvailabilityResponse>(
+      `/api/event/slug-availability?slug=${encodeURIComponent(slug)}`,
+    )
+
+    return response.available
+  }
+
   return {
     listEvents,
     getEvent,
@@ -737,5 +750,6 @@ export const useEvents = () => {
     addEventCollaborator,
     updateEventCollaborator,
     deleteEventCollaborator,
+    checkEventSlugAvailability,
   }
 }

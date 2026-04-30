@@ -16,13 +16,13 @@ const router = useRouter()
 
 function handleAuthExpired() {
   if (route.name !== 'login') {
-    void router.replace({name: 'login'})
+    void router.replace({ name: 'login' })
   }
 }
 
 onMounted(() => window.addEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired))
 onBeforeUnmount(() => window.removeEventListener(AUTH_EXPIRED_EVENT, handleAuthExpired))
- 
+
 useEventTheme()
 </script>
 

@@ -26,7 +26,7 @@ function formatDate(value: string) {
     type="button"
     radius="2xl"
     class="app-clickable-surface w-full text-left"
-    @click="emit('open', event.id)"
+    @click="emit('open', event.slug || event.id)"
   >
     <div class="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
       <div class="space-y-2">
