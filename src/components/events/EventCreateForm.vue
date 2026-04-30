@@ -56,7 +56,40 @@ const slugError = computed(() => {
   return ''
 })
 
-const hasValidationErrors = computed(() => Boolean(slugError.value || slugChecking.value))
+function isValidTimezone(value: string) {
+  try {
+    new Intl.DateTimeFormat(undefined, { timeZone: value.trim() })
+    return true
+  } catch {
+    return false
+  }
+}
+
+function parseLocalDateTime(value: string) {
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? null : date
+}
+
+const timezoneError = computed(() => {
+  if (!form.timezone.trim() && submitted.value) return 'Timezone is required'
+  if (form.timezone.trim() && !isValidTimezone(form.timezone)) return 'Enter a valid IANA timezone'
+  return ''
+})
+
+const endsAtError = computed(() => {
+  const start = parseLocalDateTime(form.starts_at_local)
+  const end = parseLocalDateTime(form.ends_at_local)
+
+  if (!form.ends_at_local && submitted.value) return 'End time is required'
+  if (form.ends_at_local && !end) return 'End time must be valid'
+  if (end && end <= new Date()) return 'End time cannot be in the past'
+  if (start && end && end <= start) return 'End time must be later than start time'
+  return ''
+})
+
+const hasValidationErrors = computed(
+  () => Boolean(slugError.value || timezoneError.value || endsAtError.value) || slugChecking.value,
+)
 
 let slugTimer: number | undefined
 let slugRequestId = 0
@@ -212,7 +245,7 @@ defineExpose({ resetForm })
       <AppField id="event-venue" label="Venue" required>
         <AppInput id="event-venue" v-model="form.venue" type="text" placeholder="Varso Tower" />
       </AppField>
-      <AppField id="event-timezone" label="Timezone" required>
+      <AppField id="event-timezone" label="Timezone" required :error="timezoneError">
         <AppInput
           id="event-timezone"
           v-model="form.timezone"
@@ -231,7 +264,7 @@ defineExpose({ resetForm })
           step="60"
         />
       </AppField>
-      <AppField id="event-ends-at" label="Ends at" required>
+      <AppField id="event-ends-at" label="Ends at" required :error="endsAtError">
         <AppInput id="event-ends-at" v-model="form.ends_at_local" type="datetime-local" step="60" />
       </AppField>
     </div>
