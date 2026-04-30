@@ -93,9 +93,20 @@ const timelineDays = computed(() => {
   return days
 })
 
-const timelineGridTemplate = computed(
-  () => `15rem repeat(${timelineDays.value.length}, minmax(4rem, 1fr))`,
+const timelineLabelColumnRem = 15
+const timelineDayColumnMinRem = 4
+
+const timelineGridTemplate = computed(() => {
+  const dayColumns = `repeat(${timelineDays.value.length}, minmax(${timelineDayColumnMinRem}rem, 1fr))`
+
+  return `${timelineLabelColumnRem}rem ${dayColumns}`
+}
 )
+
+const timelineGridStyle = computed(() => ({
+  gridTemplateColumns: timelineGridTemplate.value,
+  minWidth: `${timelineLabelColumnRem + timelineDays.value.length * timelineDayColumnMinRem}rem`,
+}))
 
 function statusLabel(status: PlannerTimelineStatus) {
   return status.replace('_', ' ')
@@ -163,16 +174,12 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
 
     <div
       v-else
-      class="overflow-x-auto rounded-xl border border-(--app-border) bg-(--app-bg-subtle)"
+      class="@container overflow-x-auto rounded-xl border border-(--app-border) bg-(--app-bg-subtle)"
     >
-      <div class="min-w-80">
+      <div class="grid items-center border-b border-(--app-border) bg-(--app-surface) text-xs font-bold uppercase text-(--app-text-muted)" :style="timelineGridStyle">
         <div
-          class="grid items-center border-b border-(--app-border) bg-(--app-surface) text-xs font-bold uppercase text-(--app-text-muted)"
-          :style="{ gridTemplateColumns: timelineGridTemplate }"
+           class="sticky left-0 z-30 border-r border-(--app-border) bg-(--app-surface) px-3 py-2"
         >
-          <div
-            class="sticky left-0 z-20 border-r border-(--app-border) bg-(--app-surface) px-3 py-2"
-          >
             Item
           </div>
           <div
@@ -182,16 +189,15 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
           >
             {{ formatTimelineDay(day) }}
           </div>
-        </div>
       </div>
 
       <div
         v-if="milestoneItems.length"
         class="grid min-h-14 items-center border-b border-(--app-border) bg-(--app-bg-subtle)"
-        :style="{ gridTemplateColumns: timelineGridTemplate }"
+        :style="timelineGridStyle"
       >
         <div
-          class="sticky left-0 z-20 h-full border-r border-(--app-border) bg-(--app-bg-subtle) px-3 py-3"
+          class="sticky left-0 z-30 h-full border-r border-(--app-border) bg-(--app-bg-subtle) px-3 py-3"
         >
           <p class="text-xs font-bold uppercase text-(--app-text-muted)">Milestones</p>
         </div>
@@ -228,11 +234,11 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
       <div
         v-for="item in timelineRows"
         :key="item.id"
-        class="grid min-h-18 items-center rounded-xl border border-(--app-border) bg-(--app-bg-subtle) last:border-b-0"
-        :style="{ gridTemplateColumns: timelineGridTemplate }"
+        class="grid min-h-18 items-stretch rounded-xl border border-(--app-border) bg-(--app-bg-subtle) last:border-b-0"
+        :style="timelineGridStyle"
       >
         <div
-          class="sticky left-0 z-20 h-full border-r border-(--app-border) bg-(--app-bg-subtle) px-3 py-3"
+          class="sticky left-0 z-20 flex h-full min-h-18 flex-col justify-between border-r border-(--app-border) bg-(--app-bg-subtle) px-3 py-3"
         >
           <p class="text-sm font-bold text-(--app-text)">{{ item.title }}</p>
           <div class="mt-2 flex flex-wrap gap-1">
@@ -290,7 +296,7 @@ function timelineBarStyle(item: PlannerTimelineItemRecord) {
             @cancel="emit('cancelEdit')"
           />
 
-          <div v-else class="flex flex-wrap items-center justify-between gap-3">
+          <div v-else class="sticky left-3 z-20 flex w-[calc(100cqw-1.5rem)] flex-wrap items-center justify-between gap-3">
             <AppSelect
               :model-value="item.status"
               :options="plannerTimelineStatusOptions"
