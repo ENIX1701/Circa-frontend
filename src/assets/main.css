@@ -245,7 +245,7 @@ textarea:disabled {
 .app-nav-item:focus-visible {
   border-color: var(--app-border);
   background: var(--app-bg-subtle);
-  columns: var(--app-text);
+  color: var(--app-text);
 }
 
 .app-nav-item:focus-visible {
@@ -256,7 +256,7 @@ textarea:disabled {
 .app-nav-item--active {
   border-color: var(--app-accent);
   background: var(--app-bg-subtle);
-  columns: var(--app-text);
+  color: var(--app-text);
 }
 
 .app-nav-item--desktop {
