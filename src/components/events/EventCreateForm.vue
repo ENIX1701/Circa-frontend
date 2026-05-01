@@ -38,6 +38,7 @@ function slugify(value: string) {
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '')
 }
 
 const submitted = ref(false)
@@ -94,6 +95,14 @@ const hasValidationErrors = computed(
 let slugTimer: number | undefined
 let slugRequestId = 0
 
+function resetSlugAvailability() {
+  window.clearTimeout(slugTimer)
+  slugRequestId += 1
+  slugChecking.value = false
+  slugAvailable.value = null
+  slugAvailabilityError.value = ''
+}
+
 watch(
   () => form.slug,
   (slug) => {
@@ -102,7 +111,11 @@ watch(
     slugAvailabilityError.value = ''
 
     const normalized = slug.trim()
-    if (!normalized || !slugPattern.test(normalized) || !props.checkSlugAvailability) return
+    if (!normalized || !slugPattern.test(normalized) || !props.checkSlugAvailability) {
+      slugRequestId += 1
+      slugChecking.value = false
+      return
+    }
 
     const requestId = ++slugRequestId
     slugChecking.value = true
@@ -134,6 +147,7 @@ function handleSlugInput(value: string | number) {
 }
 
 function resetForm() {
+  resetSlugAvailability()
   form.name = ''
   form.slug = ''
   form.description = ''
@@ -142,6 +156,8 @@ function resetForm() {
   form.starts_at_local = ''
   form.ends_at_local = ''
   slugTouched.value = false
+  submitted.value = false
+  error.value = ''
 }
 
 function pad(value: number) {

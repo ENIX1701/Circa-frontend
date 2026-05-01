@@ -97,6 +97,28 @@ describe('useEvents', () => {
     })
   })
 
+  it('checks slug availability through the plural events endpoint', async () => {
+    fetchMock.mockResolvedValueOnce(jsonResponse({ available: true }))
+
+    await expect(useEvents().checkEventSlugAvailability('spring summit')).resolves.toBe(true)
+
+    expect(fetchMock).toHaveBeenCalledWith(
+      '/api/events/slug-availability?slug=spring%20summit',
+      expect.any(Object),
+    )
+  })
+
+  it('rejects successful non-json responses before parsing', async () => {
+    fetchMock.mockResolvedValueOnce(
+      new Response('<!doctype html>', {
+        status: 200,
+        headers: { 'Content-Type': 'text/html' },
+      }),
+    )
+
+    await expect(useEvents().listEvents()).rejects.toThrow('Expected JSON response from server')
+  })
+
   it('surfaces json and text API errors', async () => {
     fetchMock
       .mockResolvedValueOnce(jsonResponse({ message: 'No access' }, { status: 403 }))
@@ -156,6 +178,7 @@ describe('useEvents', () => {
       ends_at: '2026-05-15T10:00:00Z',
     })
 
+    await expect(useEvents().getEvent(created.slug)).resolves.toEqual(created)
     await expect(useEvents().listEvents()).resolves.toEqual([created, existing])
   })
 

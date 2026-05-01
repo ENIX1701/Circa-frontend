@@ -243,6 +243,12 @@ async function request(path: string, init: RequestInit = {}): Promise<Response> 
 
 async function requestJson<T>(path: string, init: RequestInit = {}): Promise<T> {
   const response = await request(path, init)
+  const contentType = response.headers.get('content-type') ?? ''
+
+  if (!contentType.includes('application/json')) {
+    throw new Error('Expected JSON response from server')
+  }
+
   return (await response.json()) as T
 }
 
@@ -406,6 +412,7 @@ export const useEvents = () => {
     })
 
     setCached(eventPath(created.id), created)
+    setCached(eventPath(created.slug), created)
 
     const cachedEvents = getCached<EventRecord[]>('/api/events')
     if (cachedEvents) {
@@ -715,7 +722,7 @@ export const useEvents = () => {
 
   async function checkEventSlugAvailability(slug: string): Promise<boolean> {
     const response = await requestJson<SlugAvailabilityResponse>(
-      `/api/event/slug-availability?slug=${encodeURIComponent(slug)}`,
+      `/api/events/slug-availability?slug=${encodeURIComponent(slug)}`,
     )
 
     return response.available

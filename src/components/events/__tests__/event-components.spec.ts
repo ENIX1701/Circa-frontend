@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { mount } from '@vue/test-utils'
 import EventCard from '@/components/events/EventCard.vue'
 import EventCreateForm from '@/components/events/EventCreateForm.vue'
@@ -23,6 +23,9 @@ describe('event components', () => {
       'spring-summit-2026',
     )
 
+    await wrapper.find('#event-name').setValue('  Launch Party -  ')
+    expect((wrapper.find('#event-slug').element as HTMLInputElement).value).toBe('launch-party')
+
     await wrapper.find('#event-slug').setValue('Manual Slug!!!')
     expect((wrapper.find('#event-slug').element as HTMLInputElement).value).toBe('manual-slug')
 
@@ -43,6 +46,25 @@ describe('event components', () => {
     })
     expect(payload.starts_at).toMatch(/^2026-05-15T09:00:00[+-]\d{2}:\d{2}$/)
     expect((wrapper.find('#event-name').element as HTMLInputElement).value).toBe('')
+    expect(wrapper.text()).not.toContain('Slug is required')
+  })
+
+  it('clears pending slug checks when the slug becomes invalid', async () => {
+    vi.useFakeTimers()
+    const checkSlugAvailability = vi.fn().mockResolvedValue(true)
+    const wrapper = mount(EventCreateForm, {
+      props: { checkSlugAvailability },
+    })
+
+    await wrapper.find('#event-slug').setValue('spring-summit')
+    expect(wrapper.text()).toContain('Checking slug...')
+
+    await wrapper.find('#event-slug').setValue('')
+    await vi.runAllTimersAsync()
+
+    expect(checkSlugAvailability).not.toHaveBeenCalled()
+    expect(wrapper.text()).not.toContain('Checking slug...')
+    vi.useRealTimers()
   })
 
   it('renders event cards and emits the selected event slug', async () => {
