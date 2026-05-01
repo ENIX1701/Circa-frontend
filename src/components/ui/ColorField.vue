@@ -7,6 +7,8 @@ const props = defineProps<{
   label: string
   id: string
   hint?: string
+  error?: string
+  required?: boolean
 }>()
 
 const emit = defineEmits<{
@@ -27,7 +29,7 @@ function handleTextInput(event: Event) {
 </script>
 
 <template>
-  <AppField :id="id" :label="label" :hint="hint">
+  <AppField :id="id" :label="label" :hint="hint" :error="error" :required="required">
     <div class="flex overflow-hidden rounded-lg border border-(--app-border) bg-(--app-bg-subtle)">
       <div
         class="relative w-12 shrink-0 border-r border-(--app-border)"

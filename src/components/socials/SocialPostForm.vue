@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import type { CreateSocialPostRequest, SocialPostRecord } from '@/composables/useEvents'
-import { reactive, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import AppField from '../ui/AppField.vue'
 import AppTextarea from '../ui/AppTextarea.vue'
 import AppSelect from '../ui/AppSelect.vue'
@@ -33,9 +33,25 @@ const form = reactive({
   status: 'draft' as SocialPostRecord['status'],
 })
 
+const submitted = ref(false)
+
+const platformError = computed(() => {
+  if (!form.platform.trim() && submitted.value) return 'Platform is required'
+  return ''
+})
+
+const titleError = computed(() => {
+  if (!form.title.trim() && submitted.value) return 'Title is required'
+  return ''
+})
+
+const hasValidationErrors = computed(() => Boolean(platformError.value || titleError.value))
+
 watch(
   () => props.post,
   (post) => {
+    submitted.value = false
+
     if (!post) {
       form.platform = 'Instagram'
       form.title = ''
@@ -53,6 +69,10 @@ watch(
 )
 
 function handleSubmit() {
+  submitted.value = true
+
+  if (hasValidationErrors.value) return
+
   const platform = form.platform.trim()
   const title = form.title.trim()
   const body = form.body.trim()
@@ -77,31 +97,42 @@ function handleSubmit() {
 
   form.title = ''
   form.body = ''
+  submitted.value = false
 }
 </script>
 
 <template>
   <form class="space-y-5" @submit.prevent="handleSubmit">
     <div class="grid gap-5 md:grid-cols-2">
-      <AppField label="Platform">
-        <AppInput v-model="form.platform" type="text" placeholder="Instagram" />
+      <AppField id="social-platform" label="Platform" required :error="platformError">
+        <AppInput
+          id="social-platform"
+          v-model="form.platform"
+          type="text"
+          placeholder="Instagram"
+        />
       </AppField>
 
-      <AppField label="Title">
-        <AppInput v-model="form.title" type="text" placeholder="Launch teaser" />
+      <AppField id="social-title" label="Title" required :error="titleError">
+        <AppInput id="social-title" v-model="form.title" type="text" placeholder="Launch teaser" />
       </AppField>
     </div>
 
-    <AppField label="Body">
-      <AppTextarea v-model="form.body" class="min-h-32" placeholder="The copy goes here :3" />
+    <AppField id="social-body" label="Body">
+      <AppTextarea
+        id="social-body"
+        v-model="form.body"
+        class="min-h-32"
+        placeholder="The copy goes here :3"
+      />
     </AppField>
 
-    <AppField v-if="post" label="Status">
-      <AppSelect v-model="form.status" :options="socialPostStatusOptions" />
+    <AppField v-if="post" id="social-status" label="Status">
+      <AppSelect id="social-status" v-model="form.status" :options="socialPostStatusOptions" />
     </AppField>
 
     <div class="flex flex-wrap gap-3">
-      <AppButton type="submit" :loading="loading">
+      <AppButton type="submit" :loading="loading" :disabled="hasValidationErrors">
         {{ post ? (loading ? 'Saving...' : 'Save post') : loading ? 'Creating...' : 'Create post' }}
       </AppButton>
 

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth, type TestInboxLinkPreview } from '@/composables/useAuth'
 import AppPanel from '@/components/ui/AppPanel.vue'
@@ -19,6 +19,18 @@ const email = ref('')
 const state = ref<LookupState>('idle')
 const message = ref('')
 const preview = ref<TestInboxLinkPreview | null>(null)
+const submitted = ref(false)
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const emailError = computed(() => {
+  const normalizedEmail = email.value.trim()
+
+  if (!normalizedEmail && submitted.value) return 'Email is required'
+  if (normalizedEmail && !emailPattern.test(normalizedEmail)) return 'Enter a valid email address'
+  return ''
+})
+
+const hasValidationErrors = computed(() => Boolean(emailError.value))
 
 function formatDate(value: string) {
   return new Intl.DateTimeFormat(undefined, {
@@ -28,18 +40,20 @@ function formatDate(value: string) {
 }
 
 async function handleLookup() {
+  submitted.value = true
   preview.value = null
   message.value = ''
 
-  if (!email.value.trim()) {
-    state.value = 'error'
-    message.value = 'Please enter your email'
+  if (hasValidationErrors.value) {
+    state.value = 'idle'
     return
   }
 
   state.value = 'loading'
 
-  const result = await getLatestTestInboxLink(email.value.trim())
+  const normalizedEmail = email.value.trim()
+  email.value = normalizedEmail
+  const result = await getLatestTestInboxLink(normalizedEmail)
 
   if (!result.ok) {
     const normalized = result.message.toLowerCase()
@@ -67,8 +81,8 @@ async function handleLookup() {
 
 onMounted(async () => {
   const initialEmail = route.query.email
-  if (typeof initialEmail === 'string' && initialEmail.length > 0) {
-    email.value = initialEmail
+  if (typeof initialEmail === 'string' && initialEmail.trim().length > 0) {
+    email.value = initialEmail.trim()
     await handleLookup()
   }
 })
@@ -86,7 +100,7 @@ onMounted(async () => {
 
     <AppPanel>
       <div class="space-y-4">
-        <AppField id="test-inbox-email" label="Email">
+        <AppField id="test-inbox-email" label="Email" required :error="emailError">
           <AppInput
             id="test-inbox-email"
             v-model="email"
@@ -99,6 +113,7 @@ onMounted(async () => {
           type="button"
           class="w-full sm:w-auto"
           :loading="state === 'loading'"
+          :disabled="hasValidationErrors"
           @click="handleLookup"
         >
           {{ state === 'loading' ? 'Looking up link...' : 'Find latest link' }}

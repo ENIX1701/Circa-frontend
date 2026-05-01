@@ -37,6 +37,13 @@ describe('planner timeline components', () => {
 
     await wrapper.find('form').trigger('submit.prevent')
     expect(wrapper.emitted('submit')).toBeUndefined()
+    expect(wrapper.text()).toContain('Title *')
+    expect(wrapper.text()).toContain('Type *')
+    expect(wrapper.text()).toContain('Starts at *')
+    expect(wrapper.text()).toContain('Ends at *')
+    expect(wrapper.text()).toContain('Title is required')
+    expect(wrapper.text()).toContain('Start time is required')
+    expect(wrapper.text()).toContain('End time is required')
 
     await fillTimelineForm(wrapper)
     await wrapper.find('form').trigger('submit.prevent')

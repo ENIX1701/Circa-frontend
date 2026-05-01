@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import type { EventBrandingRecord, UpsertEventBrandingRequest } from '@/composables/useEvents'
+import { computed } from 'vue'
 import AppField from '../ui/AppField.vue'
 import AppInput from '../ui/AppInput.vue'
 import ColorField from '../ui/ColorField.vue'
@@ -21,10 +22,34 @@ const emit = defineEmits<{
 function updateForm(patch: Partial<UpsertEventBrandingRequest>) {
   emit('update:form', { ...props.form, ...patch })
 }
+
+function colorError(value: string, label: string) {
+  const color = value.trim()
+
+  if (color && !/^#[0-9a-fA-F]{6}$/.test(color)) return `${label} must be a valid hex color`
+  return ''
+}
+
+const primaryColorError = computed(() => colorError(props.form.primary_color, 'Primary color'))
+const secondaryColorError = computed(() =>
+  colorError(props.form.secondary_color, 'Secondary color'),
+)
+const backgroundColorError = computed(() =>
+  colorError(props.form.background_color, 'Brand background'),
+)
+const hasValidationErrors = computed(() =>
+  Boolean(primaryColorError.value || secondaryColorError.value || backgroundColorError.value),
+)
+
+function handleSubmit() {
+  if (hasValidationErrors.value) return
+
+  emit('save')
+}
 </script>
 
 <template>
-  <form class="space-y-5" @submit.prevent="emit('save')">
+  <form class="space-y-5" @submit.prevent="handleSubmit">
     <AppField id="event-name-override" label="Event name override">
       <AppInput
         id="event-name-override"
@@ -50,12 +75,14 @@ function updateForm(patch: Partial<UpsertEventBrandingRequest>) {
         id="primary-color"
         :color="form.primary_color"
         label="Primary color"
+        :error="primaryColorError"
         @update:color="updateForm({ primary_color: $event })"
       />
       <ColorField
         id="secondary-color"
         :color="form.secondary_color"
         label="Secondary color"
+        :error="secondaryColorError"
         @update:color="updateForm({ secondary_color: $event })"
       />
     </div>
@@ -75,6 +102,7 @@ function updateForm(patch: Partial<UpsertEventBrandingRequest>) {
         :color="form.background_color"
         label="Brand background"
         hint="Used in previews and brand surfaces :3"
+        :error="backgroundColorError"
         @update:color="updateForm({ background_color: $event })"
       />
     </div>
@@ -89,7 +117,7 @@ function updateForm(patch: Partial<UpsertEventBrandingRequest>) {
       />
     </AppField>
 
-    <AppButton type="submit" :loading="saving">
+    <AppButton type="submit" :loading="saving" :disabled="hasValidationErrors">
       {{ saving ? 'Saving...' : 'Save branding' }}
     </AppButton>
   </form>

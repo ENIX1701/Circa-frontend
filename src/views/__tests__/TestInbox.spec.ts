@@ -29,6 +29,16 @@ describe('TestInbox.vue', () => {
     routeMock.query = {}
   })
 
+  it('marks email as required and validates empty lookups', async () => {
+    const wrapper = mountInbox()
+
+    await wrapper.find('button').trigger('click')
+
+    expect(wrapper.text()).toContain('Email *')
+    expect(wrapper.text()).toContain('Email is required')
+    expect(getLatestTestInboxLinkMock).not.toHaveBeenCalled()
+  })
+
   it('prefills the email from the route query and auto-loads the latest link', async () => {
     routeMock.query = { email: 'tester@example.com' }
     getLatestTestInboxLinkMock.mockResolvedValueOnce({

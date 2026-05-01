@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuth } from '@/composables/useAuth'
 import AppPanel from '@/components/ui/AppPanel.vue'
@@ -19,6 +19,18 @@ const loading = ref(false)
 const linkSent = ref(false)
 const linkMessage = ref('')
 const verifying = ref(false)
+const submitted = ref(false)
+const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+
+const emailError = computed(() => {
+  const normalizedEmail = email.value.trim()
+
+  if (!normalizedEmail && submitted.value) return 'Please enter your email'
+  if (normalizedEmail && !emailPattern.test(normalizedEmail)) return 'Enter a valid email address'
+  return ''
+})
+
+const hasValidationErrors = computed(() => Boolean(emailError.value))
 
 onMounted(async () => {
   const token = route.query.token as string | undefined
@@ -38,17 +50,17 @@ onMounted(async () => {
 })
 
 async function handleRequestLink() {
+  submitted.value = true
   error.value = ''
 
-  if (!email.value.trim()) {
-    error.value = 'Please enter your email QwQ'
-    return
-  }
+  if (hasValidationErrors.value) return
 
   loading.value = true
 
   try {
-    linkMessage.value = await requestMagicLink(email.value.trim())
+    const normalizedEmail = email.value.trim()
+    email.value = normalizedEmail
+    linkMessage.value = await requestMagicLink(normalizedEmail)
     linkSent.value = true
   } catch (err) {
     error.value = err instanceof Error ? err.message : 'Could not reach server'
@@ -60,6 +72,7 @@ async function handleRequestLink() {
 function resetForm() {
   linkSent.value = false
   error.value = ''
+  submitted.value = false
 }
 </script>
 
@@ -105,11 +118,11 @@ function resetForm() {
     <AppAlert v-if="error" tone="danger">{{ error }}</AppAlert>
 
     <form @submit.prevent="handleRequestLink" class="space-y-5">
-      <AppField id="email" label="email">
+      <AppField id="email" label="Email" required :error="emailError">
         <AppInput id="email" v-model="email" type="email" placeholder="admin@example.com" />
       </AppField>
 
-      <AppButton type="submit" :loading="loading" class="w-full">
+      <AppButton type="submit" :loading="loading" :disabled="hasValidationErrors" class="w-full">
         {{ loading ? 'Sending link...' : 'Send magic link' }}
       </AppButton>
     </form>

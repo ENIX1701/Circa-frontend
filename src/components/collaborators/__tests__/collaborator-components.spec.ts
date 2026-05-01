@@ -10,6 +10,9 @@ describe('collaborator components', () => {
 
     await wrapper.find('form').trigger('submit.prevent')
     expect(wrapper.emitted('add')).toBeUndefined()
+    expect(wrapper.text()).toContain('Email *')
+    expect(wrapper.text()).toContain('Role *')
+    expect(wrapper.text()).toContain('Email is required')
 
     await wrapper.find('input[type="email"]').setValue('  ADA@EXAMPLE.COM  ')
     await wrapper.find('select').setValue('organizer')

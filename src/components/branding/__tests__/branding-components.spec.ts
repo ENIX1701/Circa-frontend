@@ -40,6 +40,17 @@ describe('branding components', () => {
     expect(wrapper.emitted('save')).toHaveLength(1)
   })
 
+  it('blocks branding saves when optional color values are invalid', async () => {
+    const wrapper = mount(BrandingForm, {
+      props: { form: formFactory({ primary_color: 'hotpink' }), saving: false },
+    })
+
+    await wrapper.find('form').trigger('submit.prevent')
+
+    expect(wrapper.text()).toContain('Primary color must be a valid hex color')
+    expect(wrapper.emitted('save')).toBeUndefined()
+  })
+
   it('renders branding preview fallbacks and inline theme colors', () => {
     const wrapper = mount(BrandingPreview, {
       props: {
