@@ -38,7 +38,7 @@ describe('event components', () => {
 
     const payload = emittedPayload(wrapper, 'create')
     expect(payload).toMatchObject({
-      name: 'Spring Summit 2026!',
+      name: 'Launch Party -',
       slug: 'manual-slug',
       description: 'Planning weekend',
       venue: 'Expo Hall',

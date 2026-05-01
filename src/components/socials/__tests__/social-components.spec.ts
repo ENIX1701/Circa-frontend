@@ -10,8 +10,8 @@ describe('social components', () => {
 
     await wrapper.find('form').trigger('submit.prevent')
     expect(wrapper.emitted('create')).toBeUndefined()
-    expect(wrapper.text()).toContain('Platform *')
-    expect(wrapper.text()).toContain('Title *')
+    expect(wrapper.find('label[for="social-platform"]').text()).toContain('*')
+    expect(wrapper.find('label[for="social-title"]').text()).toContain('*')
     expect(wrapper.text()).toContain('Title is required')
 
     await wrapper.findAll('input')[0]!.setValue('  LinkedIn  ')

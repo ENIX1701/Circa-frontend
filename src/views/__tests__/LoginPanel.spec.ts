@@ -60,7 +60,7 @@ describe('LoginPanel.vue', () => {
     const wrapper = mountLogin()
 
     expect(wrapper.text()).toContain('Sign in')
-    expect(wrapper.text()).toContain('Email *')
+    expect(wrapper.find('label[for="email"]').text()).toContain('*')
     expect(wrapper.find('input#email').exists()).toBe(true)
     expect(wrapper.find('button[type="submit"]').text()).toContain('Send magic link')
   })

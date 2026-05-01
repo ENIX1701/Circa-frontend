@@ -34,7 +34,7 @@ describe('TestInbox.vue', () => {
 
     await wrapper.find('button').trigger('click')
 
-    expect(wrapper.text()).toContain('Email *')
+    expect(wrapper.find('label[for="test-inbox-email"]').text()).toContain('*')
     expect(wrapper.text()).toContain('Email is required')
     expect(getLatestTestInboxLinkMock).not.toHaveBeenCalled()
   })

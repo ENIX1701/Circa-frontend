@@ -10,8 +10,8 @@ describe('collaborator components', () => {
 
     await wrapper.find('form').trigger('submit.prevent')
     expect(wrapper.emitted('add')).toBeUndefined()
-    expect(wrapper.text()).toContain('Email *')
-    expect(wrapper.text()).toContain('Role *')
+    expect(wrapper.find('label[for="collaborator-email"]').text()).toContain('*')
+    expect(wrapper.find('label[for="collaborator-role"]').text()).toContain('*')
     expect(wrapper.text()).toContain('Email is required')
 
     await wrapper.find('input[type="email"]').setValue('  ADA@EXAMPLE.COM  ')
